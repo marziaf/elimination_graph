@@ -3,6 +3,7 @@
 #include <vector>
 #include <unordered_set>
 #include <stdio.h>
+#include <assert.h>
 #include "lexp.h"
 #ifndef GRAPH_H
 #include "graph.h"
@@ -82,14 +83,16 @@ std::vector<Node> get_nontriang_graph()
 std::vector<Node> get_list_graph()
 {
     std::vector<Node> graph;
-    const int n = 3;
+    const int n = 4;
     graph.resize(n);
     for (int i = 0; i < n; ++i)
         graph[i] = {.id = (char)('a' + i)};
     graph[0].adj = {&graph[1]};
     graph[1].adj = {&graph[0],
                     &graph[2]};
-    graph[2].adj = {&graph[1]};
+    graph[2].adj = {&graph[1],
+                    &graph[3]};
+    graph[3].adj = {&graph[2]};
     return graph;
 }
 
@@ -130,8 +133,10 @@ void print_graph(std::vector<Node> &G)
 
 void print_order(order &ord)
 {
-    for (Node *node : ord.alpha)
-        printf("%c\n", node->id);
+    for (int i = 0; i < ord.alpha.size(); ++i)
+    {
+        printf("position %d: node %c\n", i, ord.alpha[i]->id);
+    }
 }
 
 int main()

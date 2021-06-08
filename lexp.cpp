@@ -1,6 +1,6 @@
 #include <iostream>
 #include <unordered_set>
-#include <queue>
+#include <stack>
 #include <unordered_map>
 #include <vector>
 #include <assert.h>
@@ -41,8 +41,9 @@ order lexp_iter(std::vector<Node> &G)
 {
 	int n = G.size();
 	order ord = get_empty_order(G);
+
 	// use a deque to create the list of sets of nodes
-	std::queue<std::unordered_set<Node *>> sets;
+	std::stack<std::unordered_set<Node *>> sets;
 
 	// step 1: sets initialization
 	// - insert all the nodes in the first set
@@ -57,38 +58,40 @@ order lexp_iter(std::vector<Node> &G)
 	{
 		// - get a node from the set on top of the queue
 		// - delete it from the set
-		assert(sets.front() != sets.back());
-		std::unordered_set<Node *> *set = &sets.front();
+		std::unordered_set<Node *> *set = &sets.top();
+
+		assert(!set->empty());
 		auto node_it = set->begin();
 		Node *node = *node_it;
-		assert(node != nullptr);
 		set->erase(node_it);
+
+		printf("Working on node %c\n", node->id);
 
 		// proceed with cardinality assignment only if the
 		// node has not been considered yet
+		std::unordered_set<Node *> adj_set;
 		if (ord.alphainv[node] < 0)
 		{
 			// assign cardinality
 			add_in_order(ord, cardinality_to_assign, node);
 			--cardinality_to_assign;
 			// visit the adjacent nodes and if not ordered yet,
-			// move them to the new set to add in queue
-			std::unordered_set<Node *> adj_set;
+			// move them to the new adj_set to add in queue
 			for (Node *neighbor : node->adj)
 			{
 				if (set->find(neighbor) != set->end())
 					set->erase(neighbor);
-				if (ord.alphainv[node] < 0)
+				if (ord.alphainv[neighbor] < 0)
 					adj_set.insert(neighbor);
 			}
-			// insert the set created by adjacents only if not empty
-			if (!adj_set.empty())
-				sets.push(adj_set);
 		}
 
 		// - delete empty sets from queue
 		if (set->empty())
 			sets.pop();
+		// insert the set created by adjacents only if not empty
+		if (!adj_set.empty())
+			sets.push(adj_set);
 	}
 	return ord;
 }
