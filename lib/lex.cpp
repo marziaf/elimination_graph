@@ -39,33 +39,30 @@ order lexp_iter(std::vector<Node> &G)
 	int n = G.size();
 	order ord = get_empty_order(G);
 	std::queue<Node *> visit_order;
+	std::unordered_set<Node *> visited;
 
-	// step 1: sets initialization
-	// - insert all the nodes in the stack
+	// add any node as root of the tree
 	visit_order.push(&G[0]);
 
-	// step 2: iteratively assign the cardinality
+	// iteratively assign the cardinality
 	int cardinality_to_assign = n - 1;
 	while (!visit_order.empty())
 	{
-		// - get a node from the set on top of the queue
-		// - delete it from the stack
+		// get a node with deque
 		Node *node = visit_order.front();
 		visit_order.pop();
+		visited.insert(node);
 
-		// proceed with cardinality assignment only if the
-		// node has not been given a cardinality yet
-		if (ord.alphainv[node] < 0)
+		// assign cardinality
+		add_in_order(ord, cardinality_to_assign, node);
+		--cardinality_to_assign;
+		// if not yet in queue, enque the adjacent nodes
+		for (Node *neighbor : node->adj)
 		{
-			// assign cardinality
-			add_in_order(ord, cardinality_to_assign, node);
-			--cardinality_to_assign;
-			// visit the adjacent nodes and if not visited yet,
-			// move them to the new adj_set to add in queue
-			for (Node *neighbor : node->adj)
+			if (visited.find(neighbor) == visited.end())
 			{
-				if (ord.alphainv[neighbor] < 0)
-					visit_order.push(neighbor);
+				visit_order.push(neighbor);
+				visited.insert(neighbor);
 			}
 		}
 	}
