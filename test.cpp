@@ -4,10 +4,8 @@
 #include <unordered_set>
 #include <stdio.h>
 #include <assert.h>
-#include "lexp.h"
-#ifndef GRAPH_H
-#include "graph.h"
-#endif
+#include "lib/lexp.h"
+#include "lib/graph.h"
 
 void print_graph(std::vector<Node> &G);
 

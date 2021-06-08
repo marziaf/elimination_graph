@@ -1,5 +1,6 @@
 #include <unordered_set>
 
+#ifndef GRAPH_H
 #define GRAPH_H
 
 struct Node
@@ -8,3 +9,4 @@ struct Node
     // adj : the adjacent nodes
     std::unordered_set<Node *> adj;
 };
+#endif

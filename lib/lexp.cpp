@@ -4,11 +4,8 @@
 #include <unordered_map>
 #include <vector>
 #include <assert.h>
-
-#include "lexp.h"
-#ifndef GRAPH_H
 #include "graph.h"
-#endif
+#include "lexp.h"
 
 /*
 * Initialize the structure order
