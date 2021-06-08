@@ -15,8 +15,9 @@ struct order
 };
 
 /**
- * returns the elimination order for the graph G
+ * return the elimination order for the graph G
  */
 order lexp_iter(std::vector<Node> &G);
+order lexm(std::vector<Node> &G);
 
 #endif

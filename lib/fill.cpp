@@ -21,7 +21,6 @@ std::pair<std::vector<Node>, int> fill(std::vector<Node> &graph, order ord)
     int num_filled_edges = 0;
     for (Node *node : ord.alpha)
     {
-        printf("working with node %c\n", node->id);
         // Look for its adjacent with lowest cardinality that comes after node
         int best_card = n;
         for (Node *neighbor : node->adj)
@@ -34,7 +33,6 @@ std::pair<std::vector<Node>, int> fill(std::vector<Node> &graph, order ord)
         // Update with fill in by connecting next_in_adj to adj arcs
         if (best_card < n)
         {
-            printf("Smallest neigh for %c is %c\n", node->id, ord.alpha[best_card]->id);
             std::unordered_set<Node *> adj = filled_graph[best_card].adj;
             for (Node *neighbor : node->adj)
             {
@@ -44,12 +42,10 @@ std::pair<std::vector<Node>, int> fill(std::vector<Node> &graph, order ord)
                     {
                         adj.insert(neighbor);
                         ++num_filled_edges;
-                        printf("Adding %c - %c\n", filled_graph[best_card].id, neighbor->id);
                     }
                 }
             }
         }
     }
-    printf("********\n");
     return {filled_graph, num_filled_edges};
 }
