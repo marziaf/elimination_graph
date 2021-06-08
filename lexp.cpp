@@ -65,8 +65,6 @@ order lexp_iter(std::vector<Node> &G)
 		Node *node = *node_it;
 		set->erase(node_it);
 
-		printf("Working on node %c\n", node->id);
-
 		// proceed with cardinality assignment only if the
 		// node has not been considered yet
 		std::unordered_set<Node *> adj_set;

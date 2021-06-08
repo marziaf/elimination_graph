@@ -77,6 +77,8 @@ std::vector<Node> get_nontriang_graph()
                     &graph[5]};
     graph[4].adj = {&graph[1],
                     &graph[5]};
+    graph[5].adj = {&graph[1],
+                    &graph[5]};
     return graph;
 }
 
@@ -133,19 +135,29 @@ void print_graph(std::vector<Node> &G)
 
 void print_order(order &ord)
 {
-    for (int i = 0; i < ord.alpha.size(); ++i)
+    for (Node *node : ord.alpha)
     {
-        printf("position %d: node %c\n", i, ord.alpha[i]->id);
+        printf("%c ", node->id);
     }
+    printf("\n");
 }
 
 int main()
 {
-    std::vector<Node> graph = get_list_graph();
-    printf("The original graph is:\n");
-    print_graph(graph);
+    std::vector<std::pair<std::vector<Node>, order>> tests;
+    std::vector<Node> G1 = get_list_graph();
+    tests.push_back({G1, lexp_iter(G1)});
+    std::vector<Node> G2 = get_nontriang_graph();
+    tests.push_back({G2, lexp_iter(G2)});
+    std::vector<Node> G3 = get_perfect_elimination_graph();
+    tests.push_back({G3, lexp_iter(G3)});
 
-    order ord = lexp_iter(graph);
-    printf("\nThe order is:\n");
-    print_order(ord);
+    for (std::pair<std::vector<Node>, order> test : tests)
+    {
+        printf("The original graph is:\n");
+        print_graph(test.first);
+        printf("The order is:\n");
+        print_order(test.second);
+        printf("---------------------\n");
+    }
 }
