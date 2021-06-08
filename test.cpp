@@ -4,8 +4,9 @@
 #include <unordered_set>
 #include <stdio.h>
 #include <assert.h>
-#include "lib/lexp.h"
+#include "lib/lex.h"
 #include "lib/graph.h"
+#include "lib/fill.h"
 
 void print_graph(std::vector<Node> &G);
 
@@ -23,6 +24,7 @@ std::vector<Node> get_perfect_elimination_graph()
     graph[1].adj = {&graph[5],
                     &graph[6]};
     graph[2].adj = {&graph[0],
+                    &graph[3],
                     &graph[4],
                     &graph[8]};
     graph[3].adj = {&graph[2],
@@ -75,8 +77,9 @@ std::vector<Node> get_nontriang_graph()
                     &graph[5]};
     graph[4].adj = {&graph[1],
                     &graph[5]};
-    graph[5].adj = {&graph[1],
-                    &graph[5]};
+    graph[5].adj = {&graph[2],
+                    &graph[3],
+                    &graph[4]};
     return graph;
 }
 
@@ -140,22 +143,40 @@ void print_order(order &ord)
     printf("\n");
 }
 
+struct results
+{
+    std::string test_name;
+    std::vector<Node> original_graph;
+    order ord;
+    std::vector<Node> fillin_graph;
+    int added_edges;
+};
+
 int main()
 {
-    std::vector<std::pair<std::vector<Node>, order>> tests;
+    std::vector<results> tests;
     std::vector<Node> G1 = get_list_graph();
-    tests.push_back({G1, lexp_iter(G1)});
-    std::vector<Node> G2 = get_nontriang_graph();
-    tests.push_back({G2, lexp_iter(G2)});
+    order ord1 = lexp_iter(G1);
+    auto fll1 = fill(G1, ord1);
+    tests.push_back({"list", G1, ord1, fll1.first, fll1.second});
     std::vector<Node> G3 = get_perfect_elimination_graph();
-    tests.push_back({G3, lexp_iter(G3)});
+    order ord3 = lexp_iter(G3);
+    auto fll3 = fill(G3, ord3);
+    tests.push_back({"triangulated", G3, ord3, fll3.first, fll3.second});
+    std::vector<Node> G2 = get_nontriang_graph();
+    order ord2 = lexp_iter(G2);
+    auto fll2 = fill(G2, ord2);
+    tests.push_back({"non-triangulated", G2, ord2, fll2.first, fll2.second});
 
-    for (std::pair<std::vector<Node>, order> test : tests)
+    for (results test : tests)
     {
-        printf("The original graph is:\n");
-        print_graph(test.first);
-        printf("The order is:\n");
-        print_order(test.second);
+        printf("---------------------\n");
+        std::cout << "TEST: " << test.test_name << std::endl;
+        printf("\nThe original graph is:\n");
+        print_graph(test.original_graph);
+        printf("\nThe filled graph is:\n");
+        print_graph(test.fillin_graph);
+        printf("\n%d edges added\n", test.added_edges);
         printf("---------------------\n");
     }
 }
