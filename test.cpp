@@ -14,8 +14,7 @@ struct Results {
   std::string test_name;
   std::vector<Node> original_graph;
   Order ord;
-  std::vector<Node> fillin_graph;
-  std::vector<std::pair<int, int>> added_edges;
+  Elimination_graph elimination_graph;
   int expected_num_added_edges;
 
   Results(std::string name, std::vector<Node> G, int e)
@@ -46,38 +45,50 @@ void print(const Results &r) {
   printf("ORDER:\n");
   print_order(r.ord, r.original_graph);
   printf("FILL_IN GRAPH:\n");
-  if (r.added_edges.size() > 0) {
+  if (r.elimination_graph.new_edges.size() > 0) {
     printf("Added edges:\n");
-    for (auto edge : r.added_edges)
-      printf("%c -> %c\n", edge.first, edge.second);
+    for (auto edge : r.elimination_graph.new_edges)
+      printf("%c -> %c\n", r.original_graph[edge.first].id,
+             r.original_graph[edge.second].id);
     printf("The new graph is:\n");
-    print_graph(r.fillin_graph);
+    print_graph(r.elimination_graph.filled_graph);
   } else
     printf("No edges added\n");
-}
-std::vector<Results> get_test_results(Order (*lexfun)(std::vector<Node> &)) {
-  std::vector<Results> tests;
-  tests.push_back(Results("list", get_list_graph(), 0));
-  /*tests.emplace_back(
-      new Results("triangulated", get_perfect_elimination_graph(), 0));
-  tests.emplace_back(new Results("non-triangulated", get_nontriang_graph(),
-  2));*/
-  for (auto &test : tests) {
-    test.ord = lexfun(test.original_graph);
-    std::tie(test.fillin_graph, test.added_edges) =
-        fill(test.original_graph, test.ord);
-  }
-  return tests;
 }
 
 void print_results(const std::vector<Results> &res) {
   for (auto &test : res) {
     print(test);
+    printf("-----------------------\n");
   }
-  printf("-----------------------\n");
+}
+
+std::vector<Results>
+get_test_results(Order (*lexfun)(const std::vector<Node> &)) {
+  std::vector<Results> tests;
+  tests.push_back(Results("list", get_list_graph(), 0));
+  tests.push_back(Results("triangulated", get_perfect_elimination_graph(), 0));
+  tests.push_back(Results("non-triangulated", get_nontriang_graph(), 2));
+  for (auto &test : tests) {
+    test.ord = lexfun(test.original_graph);
+    test.elimination_graph = fill(test.original_graph, test.ord);
+  }
+  return tests;
+}
+
+void run_test(const std::vector<Results> &res) {
+  for (auto test : res) {
+    std::cout << "testcase: " << test.test_name << " -- ";
+    if (test.expected_num_added_edges !=
+        test.elimination_graph.new_edges.size())
+      printf("***FAILED****\n");
+    else
+      printf("passed\n");
+  }
 }
 
 int main() {
-  auto results_p = get_test_results(lexp_iter);
+  auto results_p = get_test_results(lexp);
   print_results(results_p);
+  run_test(results_p);
 }

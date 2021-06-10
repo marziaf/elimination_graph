@@ -8,7 +8,7 @@ std::vector<Node> get_perfect_elimination_graph() {
   const int n = 10;
   std::vector<Node> G;
   for (int i = 0; i < n; ++i)
-    G.push_back(Node((char)('a' + i), i));
+    G.push_back(Node((char)('1' + i), i));
   G[0].adj = {2, 4};
   G[1].adj = {5, 6};
   G[2].adj = {0, 3, 4, 8};
@@ -28,7 +28,7 @@ std::vector<Node> get_nontriang_graph() {
   const int n = 6;
   std::vector<Node> G;
   for (int i = 0; i < n; ++i)
-    G.push_back(Node((char)('a' + i), i));
+    G.push_back(Node((char)('1' + i), i));
   G[0].adj = {2, 3};
   G[1].adj = {2, 4};
   G[2].adj = {0, 1, 5};

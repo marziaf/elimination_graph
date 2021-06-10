@@ -21,7 +21,7 @@ struct Order {
 /**
  * return the elimination order for the graph G
  */
-Order lexp_iter(std::vector<Node> &G);
-Order lexm(std::vector<Node> &G);
+Order lexp(const std::vector<Node> &G);
+Order lexm(const std::vector<Node> &G);
 
 #endif

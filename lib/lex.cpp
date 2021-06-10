@@ -2,7 +2,8 @@
 #include "graph.h"
 #include <assert.h>
 #include <iostream>
-#include <queue>
+#include <stack>
+#include <unordered_set>
 #include <vector>
 
 /**
@@ -17,7 +18,54 @@ void add_in_order(Order &ord, int card, int node_pos) {
 /**
  * returns the elimination order for the graph G
  */
-Order lexp_iter(std::vector<Node> &G) {
+Order lexp(const std::vector<Node> &G) {
+  const int n = G.size();
+  Order order = Order(n);
+  std::stack<std::unordered_set<int>> set_stack;
+
+  // Initialize the stack with the first set containing all the nodes
+  std::unordered_set<int> init_set;
+  for (Node node : G)
+    init_set.insert(node.pos);
+  set_stack.push(init_set);
+
+  int cardinality = n - 1;
+  while (!set_stack.empty()) {
+    assert(!set_stack.top().empty());
+
+    for (auto s : set_stack.top()) {
+      printf(" %c ", G[s].id);
+    }
+
+    // get a vertex from the topmost set
+    int node = *set_stack.top().begin();
+    set_stack.top().erase(node);
+
+    printf("\nnode: %c\n", G[node].id);
+
+    // if it has no cardinality yet, assign it
+    if (order.alphainv[node] < 0) {
+      add_in_order(order, cardinality, node);
+      cardinality--;
+
+      // create a new set with the unvisited adjacents and push it
+      std::unordered_set<int> new_set;
+      for (int adj : G[node].adj) {
+        set_stack.top().erase(adj);
+        if (order.alphainv[adj] < 0)
+          new_set.insert(adj);
+      }
+      set_stack.push(new_set);
+    }
+    // remove empty sets
+    while (!set_stack.empty() && set_stack.top().empty())
+      set_stack.pop();
+  }
+  return order;
+}
+
+/*
+Order BFS(std::vector<Node> &G) {
   const int n = G.size();
   Order ord = Order(n);
   // store the order in which to visit the nodes
@@ -37,6 +85,7 @@ Order lexp_iter(std::vector<Node> &G) {
     // get a node with deque
     int node = visit_order.front();
     visit_order.pop();
+    visited[node] = true;
 
     // assign cardinality
     add_in_order(ord, cardinality, node);
@@ -53,7 +102,7 @@ Order lexp_iter(std::vector<Node> &G) {
   }
   return ord;
 }
-
+*/
 /*
 order lexm(std::vector<Node> &G) {
   int n = G.size();
