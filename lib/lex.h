@@ -1,23 +1,27 @@
-#include <vector>
-#include <unordered_map>
 #include "graph.h"
+#include <unordered_map>
+#include <vector>
 
 #ifndef LEXP_H
 #define LEXP_H
 
-/* 
-* Use a struct to gather alpha and its inverse
-**/
-struct order
-{
-    std::vector<Node *> alpha;
-    std::unordered_map<Node *, int> alphainv;
+/*
+ * Use a struct to gather alpha and its inverse
+ **/
+struct Order {
+  // alpha[cardinality] = node.pos
+  std::vector<int> alpha;
+  // alphainv[node.pos] = cardinality
+  std::vector<int> alphainv;
+
+  Order(int n) : alpha(n, -1), alphainv(n, -1) {}
+  Order() {}
 };
 
 /**
  * return the elimination order for the graph G
  */
-order lexp_iter(std::vector<Node> &G);
-order lexm(std::vector<Node> &G);
+Order lexp_iter(std::vector<Node> &G);
+Order lexm(std::vector<Node> &G);
 
 #endif

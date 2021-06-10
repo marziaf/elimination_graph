@@ -5,46 +5,37 @@
 #include <unordered_map>
 #include <vector>
 
-
 /**
  * Return
- * - the new graph with the fill-in edges and the nodes respecting the order
- * - the number of added edges
+ * - the new graph with the fill-in edges
+ * - the added edges
  */
-std::pair<std::vector<Node>, int> fill(std::vector<Node> &graph, order ord) {
-  int n = graph.size();
-  // Copy the graph reordering the nodes
-  std::vector<Node> filled_graph;
-
-  for (int i = 0; i < n; ++i) {
-    assert(ord.alpha[i] != 0);
-    Node node = *(ord.alpha[i]);
-    filled_graph.push_back(node);
-  }
-
+std::pair<std::vector<Node>, std::vector<std::pair<int, int>>>
+fill(std::vector<Node> G, const Order &ord) {
+  int n = G.size();
   // Iterate over the nodes according to the order
-  int num_filled_edges = 0;
-  for (Node *node : ord.alpha) {
-    // Look for its adjacent with lowest cardinality that comes after node
+  std::vector<std::pair<int, int>> filled_edges;
+  for (int node : ord.alpha) {
+    // Look for its adjacent with lowest cardinality that comes after node (i.e.
+    // not eliminated yet)
     int best_card = n;
-    for (Node *neighbor : node->adj) {
-      int neigh_card = ord.alphainv[neighbor];
-      // smallest cardinality without considering yet eliminated nodes
-      if (neigh_card < best_card && neigh_card > ord.alphainv[node])
-        best_card = neigh_card;
+    for (int adj : G[node].adj) {
+      int adj_card = ord.alphainv[adj];
+      if (adj_card < best_card && adj_card > ord.alphainv[node])
+        best_card = adj_card;
     }
+
     // Update with fill in by connecting next_in_adj to adj arcs
-    if (best_card < n) {
-      std::unordered_set<Node *> adj = filled_graph[best_card].adj;
-      for (Node *neighbor : node->adj) {
-        if (ord.alphainv[neighbor] > best_card) {
-          if (adj.find(neighbor) == adj.end()) {
-            adj.insert(neighbor);
-            ++num_filled_edges;
-          }
+    if (best_card != n) {
+      int best_card_pos = ord.alpha[best_card];
+      for (int adj : G[best_card_pos].adj) {
+        if (ord.alphainv[adj] > best_card &&
+            G[best_card_pos].adj.find(adj) == G[adj].adj.end()) {
+          G[best_card_pos].adj.insert(adj);
+          filled_edges.push_back({best_card_pos, adj});
         }
       }
     }
   }
-  return {filled_graph, num_filled_edges};
+  return {G, filled_edges};
 }

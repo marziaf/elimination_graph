@@ -2,71 +2,59 @@
 #include "graph.h"
 #include <assert.h>
 #include <iostream>
-#include <map>
 #include <queue>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
-/*
- * Initialize the structure order
- **/
-order get_empty_order(std::vector<Node> &G) {
-  int n = G.size();
-  std::vector<Node *> alpha;
-  std::unordered_map<Node *, int> alphainv;
-  for (int i = 0; i < n; ++i) {
-    alpha.push_back(nullptr);
-    alphainv[&G[i]] = -1;
-  }
-  return {alpha, alphainv};
-}
 /**
  * Put node in order position pos
  */
-void add_in_order(order &ord, int pos, Node *node) {
-  assert(pos < ord.alpha.size());
-  ord.alpha[pos] = node;
-  ord.alphainv[node] = pos;
+void add_in_order(Order &ord, int card, int node_pos) {
+  assert(card < ord.alpha.size() && card >= 0);
+  ord.alpha[card] = node_pos;
+  ord.alphainv[node_pos] = card;
 }
 
 /**
  * returns the elimination order for the graph G
  */
-order lexp_iter(std::vector<Node> &G) {
-  int n = G.size();
-  order ord = get_empty_order(G);
-  std::queue<Node *> visit_order;
-  std::unordered_set<Node *> visited;
+Order lexp_iter(std::vector<Node> &G) {
+  const int n = G.size();
+  Order ord = Order(n);
+  // store the order in which to visit the nodes
+  std::queue<int> visit_order;
+  std::vector<bool> visited(n, false);
 
   // add any node as root of the tree
-  visit_order.push(&G[0]);
-  visited.insert(&G[0]);
+  visit_order.push(0);
+  visited[0] = true;
 
   // iteratively assign the cardinality
-  int cardinality_to_assign = n - 1;
+  int cardinality = n - 1;
   while (!visit_order.empty()) {
     assert(visited.size() <= n);
-    assert(cardinality_to_assign >= 0);
+    assert(cardinality >= 0);
+
     // get a node with deque
-    Node *node = visit_order.front();
+    int node = visit_order.front();
     visit_order.pop();
 
     // assign cardinality
-    add_in_order(ord, cardinality_to_assign, node);
-    --cardinality_to_assign;
+    add_in_order(ord, cardinality, node);
+    cardinality--;
+
     // if not yet in queue, enque the adjacent nodes
-    for (Node *neighbor : node->adj) {
-      assert(neighbor->id - 'a' < n);
-      if (visited.find(neighbor) == visited.end()) {
+    for (int neighbor : G[node].adj) {
+      assert(neighbor < n && neighbor >= 0);
+      if (!visited[neighbor]) {
         visit_order.push(neighbor);
-        visited.insert(neighbor);
+        visited[neighbor] = true;
       }
     }
   }
   return ord;
 }
 
+/*
 order lexm(std::vector<Node> &G) {
   int n = G.size();
   order ord = get_empty_order(G);
@@ -121,3 +109,4 @@ order lexm(std::vector<Node> &G) {
     }
   }
 }
+*/
