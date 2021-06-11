@@ -18,6 +18,13 @@ struct Order {
   Order() {}
 };
 
+struct Lex_result {
+  std::vector<Node> simplified_graph;
+  Order order;
+
+  Lex_result(int n) : simplified_graph(n), order(Order(n)) {}
+};
+
 /**
  * return the elimination order for the graph G
  */

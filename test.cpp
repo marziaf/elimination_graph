@@ -68,7 +68,11 @@ get_test_results(Order (*lexfun)(const std::vector<Node> &)) {
   std::vector<Results> tests;
   tests.push_back(Results("list", get_list_graph(), 0));
   tests.push_back(Results("triangulated", get_perfect_elimination_graph(), 0));
+  tests.push_back(Results("tree", get_tree(), 0));
   tests.push_back(Results("non-triangulated", get_nontriang_graph(), 2));
+  tests.push_back(Results("ring", get_ring_graph(), 2));
+  tests.push_back(Results("many fill edges", get_I_love_edges_graph(), 5));
+
   for (auto &test : tests) {
     test.ord = lexfun(test.original_graph);
     test.elimination_graph = fill(test.original_graph, test.ord);
@@ -88,7 +92,14 @@ void run_test(const std::vector<Results> &res) {
 }
 
 int main() {
-  auto results_p = get_test_results(lexm);
+  auto results_p = get_test_results(lexp);
+  auto results_m = get_test_results(lexm);
+  printf("Results LEXP+FILL\n");
   print_results(results_p);
+  printf("Results LEXM+FILL\n");
+  print_results(results_m);
+  printf("\nTests for LEXP+FILL\n");
   run_test(results_p);
+  printf("\nTests for LEXM+FILL\n");
+  run_test(results_m);
 }

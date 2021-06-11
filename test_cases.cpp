@@ -22,7 +22,24 @@ std::vector<Node> get_perfect_elimination_graph() {
 
   return G;
 }
+std::vector<Node> get_tree() {
+  const int n = 10;
+  std::vector<Node> G;
+  for (int i = 0; i < n; ++i)
+    G.push_back(Node((char)('1' + i), i));
+  G[0].adj = {4};
+  G[1].adj = {6};
+  G[2].adj = {8};
+  G[3].adj = {8};
+  G[4].adj = {0, 7};
+  G[5].adj = {9};
+  G[6].adj = {1, 9};
+  G[7].adj = {4, 9};
+  G[8].adj = {2, 3, 9};
+  G[9].adj = {5, 6, 7, 8};
 
+  return G;
+}
 // get simple non triangulated
 std::vector<Node> get_nontriang_graph() {
   const int n = 6;
@@ -48,6 +65,38 @@ std::vector<Node> get_list_graph() {
   G[2].adj = {1, 3};
   G[3].adj = {2, 4};
   G[4].adj = {3};
+  return G;
+}
+
+std::vector<Node> get_ring_graph() {
+  std::vector<Node> G;
+  const int n = 5;
+  for (int i = 0; i < n; ++i)
+    G.push_back(Node((char)('a' + i), i));
+  G[0].adj = {1, 4};
+  G[1].adj = {0, 2};
+  G[2].adj = {1, 3};
+  G[3].adj = {2, 4};
+  G[4].adj = {3, 0};
+  return G;
+}
+
+std::vector<Node> get_I_love_edges_graph() {
+  std::vector<Node> G;
+  const int n = 9;
+  for (int i = 0; i < n; ++i)
+    G.push_back(Node((char)('1' + i), i));
+
+  G[0].adj = {1, 4};
+  G[1].adj = {0, 3, 5, 2};
+  G[2].adj = {6, 1};
+  G[3].adj = {1, 5, 7, 4};
+  G[4].adj = {0, 3, 7};
+  G[5].adj = {1, 6, 8, 3};
+  G[6].adj = {2, 8, 5};
+  G[7].adj = {4, 3, 8};
+  G[8].adj = {5, 6, 7};
+
   return G;
 }
 

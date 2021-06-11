@@ -30,13 +30,11 @@ Elimination_graph fill(std::vector<Node> G, const Order &ord) {
       for (int adj : G[node].adj) {
         if (ord.alphainv[adj] > best_card &&
             G[best_card_pos].adj.find(adj) == G[best_card_pos].adj.end()) {
-          printf("Adding edge %c -> %c\n", G[best_card_pos].id, G[adj].id);
           G[best_card_pos].adj.insert(adj);
           elim.new_edges.push_back({best_card_pos, adj});
         }
       }
     }
   }
-  printf("************************");
   return elim;
 }
