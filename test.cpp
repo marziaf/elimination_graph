@@ -88,7 +88,7 @@ void run_test(const std::vector<Results> &res) {
 }
 
 int main() {
-  auto results_p = get_test_results(lexp);
+  auto results_p = get_test_results(lexm);
   print_results(results_p);
   run_test(results_p);
 }

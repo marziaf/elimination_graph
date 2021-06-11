@@ -17,7 +17,6 @@ Elimination_graph fill(std::vector<Node> G, const Order &ord) {
   for (int node : ord.alpha) {
     // Look for its adjacent with lowest cardinality that comes after node (i.e.
     // not eliminated yet)
-    printf("Working on node %c\n", G[node].id);
     int best_card = n;
     for (int adj : G[node].adj) {
       int adj_card = ord.alphainv[adj];
