@@ -110,7 +110,7 @@ std::vector<Node> get_random_graph(int n, int e) {
   // create the first n-1 egdes to ensure connectivity property
   // creating a tree involving all edges
   assert(n > 0);
-  assert(e > n - 1);
+  assert(e >= n - 1);
   assert(e <= n * (n - 1) / 2);
   // each time take an already connected root to connect to
   // a random number of not yet connected nodes

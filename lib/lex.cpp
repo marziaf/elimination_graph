@@ -68,9 +68,9 @@ Order lexm(const std::vector<Node> &G) {
 
   // Assign cardinalities from the highest
   int highest_node = 0;
-  float highest_card = 0;
+  float highest_lab = 0;
   for (int card = n - 1; card >= 0; --card) {
-    reach.resize(highest_card + 2);
+    reach.resize(highest_lab + 2);
 
     // Set the cardinality of the node with highest label
     add_in_order(ord, card, highest_node);
@@ -86,7 +86,7 @@ Order lexm(const std::vector<Node> &G) {
     // search the chains from highest_node (begin chain) to each unnumbered
     // vertex w (end_chain) with a chain with labels < label(w) start the search
     // from the highest labels for efficiency
-    for (int level = highest_card; level >= 0; level--) {
+    for (int level = highest_lab; level >= 0; level--) {
       while (!reach[level].empty()) {
         int w = reach[level].back();
         reach[level].pop_back();
@@ -141,7 +141,7 @@ Order lexm(const std::vector<Node> &G) {
 
     // set new high values
     highest_node = sorted_labels[0].first;
-    highest_card = sorted_labels[0].second;
+    highest_lab = labels[sorted_labels[0].first];
   }
   return ord;
 }
