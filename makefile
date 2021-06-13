@@ -8,11 +8,14 @@ OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 all: test bm
 
-test: test.cpp $(OBJ)
+test: test.cpp $(OBJ) test_cases.o
 	${CXX} ${CXXFLAGS} -o $@ $^
 
-bm: bm.cpp $(OBJ)
-	${CXX} $< ${CXXFLAGS} ${LDLIBS}  -o $@  $(OBJ)
+bm: bm.cpp $(OBJ) test_cases.o
+	${CXX} $< ${CXXFLAGS} ${LDLIBS}  -o $@  $(OBJ) test_cases.o
+
+test_cases.o: test_cases.cpp
+	${CXX} ${CXXFLAGS} -c -o $@ $^
 
 obj/%.o: lib/%.cpp
 	${CXX} ${CXXFLAGS} -c -o $@ $^

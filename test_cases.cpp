@@ -1,4 +1,6 @@
+#include "test_cases.h"
 #include "lib/graph.h"
+#include <algorithm>
 #include <assert.h>
 #include <random>
 #include <vector>
@@ -100,38 +102,30 @@ std::vector<Node> get_I_love_edges_graph() {
   return G;
 }
 
-// factorial of a number
-int fact(int n) { return (n == 0) || (n == 1) ? 1 : n * fact(n - 1); }
-
-// Returns a random graph of n nodes and e edges maximum
+// Returns a random graph of n nodes and e edges
 std::vector<Node> get_random_graph(int n, int e) {
+  srand(time(NULL));
   // Create an adjacency matrix to create the vertices
   bool m[n][n] = {false};
   // create the first n-1 egdes to ensure connectivity property
   // creating a tree involving all edges
+  assert(n > 0);
   assert(e > n - 1);
-  assert(e < fact(n));
-  // keep track of the nodes not yet connected
-  std::set<int> to_be_connected;
-  for (int i = 0; i < n - 1; ++i) {
-    to_be_connected.insert(i);
-  }
-  // each time take a random (already connected) root to connect to
+  assert(e <= n * (n - 1) / 2);
+  // each time take an already connected root to connect to
   // a random number of not yet connected nodes
-  int root = *to_be_connected.begin();
-  int new_root;
-  while (to_be_connected.size() > 0) {
-    to_be_connected.erase(root);
-    int root_connections = (std::rand() % (to_be_connected.size() - 1)) + 1;
-    for (int i = 0; i < root_connections; ++i) {
-      int child = *to_be_connected.begin();
-      if (i == 0)
-        new_root = child;
+  int last_connected_node = 0;
+  while (last_connected_node < n - 1) {
+    // get new root from one of the previously connected nodes
+    int root = (std::rand() % (last_connected_node + 1));
+    // create new edges from root to missing nodes
+    int first_node = last_connected_node + 1;
+    last_connected_node = first_node + (std::rand() % (n - first_node));
+
+    for (int child = first_node; child <= last_connected_node; ++child) {
       m[root][child] = true;
       m[child][root] = true;
-      to_be_connected.erase(child);
     }
-    root = new_root;
   }
 
   // Create the remaining connections
@@ -156,32 +150,4 @@ std::vector<Node> get_random_graph(int n, int e) {
     }
   }
   return G;
-}
-
-struct Results {
-  std::string test_name;
-  std::vector<Node> original_graph;
-  Order ord;
-  Elimination_graph elimination_graph;
-  int expected_num_added_edges;
-
-  Results(std::string name, std::vector<Node> G, int e)
-      : test_name(name), original_graph(G), expected_num_added_edges(e){};
-};
-
-std::vector<Results>
-get_test_results(Order (*lexfun)(const std::vector<Node> &)) {
-  std::vector<Results> tests;
-  tests.push_back(Results("list", get_list_graph(), 0));
-  tests.push_back(Results("triangulated", get_perfect_elimination_graph(), 0));
-  tests.push_back(Results("tree", get_tree(), 0));
-  tests.push_back(Results("non-triangulated", get_nontriang_graph(), 2));
-  tests.push_back(Results("ring", get_ring_graph(), 2));
-  tests.push_back(Results("many fill edges", get_I_love_edges_graph(), 5));
-
-  for (auto &test : tests) {
-    test.ord = lexfun(test.original_graph);
-    test.elimination_graph = fill(test.original_graph, test.ord);
-  }
-  return tests;
 }

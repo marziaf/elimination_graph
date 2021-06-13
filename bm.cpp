@@ -1,18 +1,13 @@
+#include "lib/fill.h"
+#include "lib/graph.h"
+#include "lib/lex.h"
+#include "test_cases.h"
+#include <assert.h>
 #include <benchmark/benchmark.h>
+#include <cstdlib>
+#include <stdio.h>
+#include <vector>
 
-static void BM_StringCreation(benchmark::State &state) {
-  for (auto _ : state)
-    std::string empty_string;
+static void get_test_lexp(int n, int e) {
+  Results test = Results("list", get_random_graph(n, e), -1);
 }
-// Register the function as a benchmark
-BENCHMARK(BM_StringCreation);
-
-// Define another benchmark
-static void BM_StringCopy(benchmark::State &state) {
-  std::string x = "hello";
-  for (auto _ : state)
-    std::string copy(x);
-}
-BENCHMARK(BM_StringCopy);
-
-BENCHMARK_MAIN();
