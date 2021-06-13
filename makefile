@@ -1,19 +1,23 @@
 CXX = g++
-CXXFLAGS = -std=c++14 -g -fsanitize=address -lasan
+CXXFLAGS = -std=c++14 -g -fsanitize=address -lasan 
+LDLIBS = -isystem benchmark/include -Lbenchmark/build/src  -lpthread  -lbenchmark
 
-all: test test.o lex.o fill.o
+ODIR=obj
+_OBJ = lex.o fill.o
+OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
-test: test.o lex.o fill.o
-	${CXX} ${CXXFLAGS} -o $@ $(addprefix obj/, $^)
+all: test bm
 
-test.o: lex.o test.cpp
-	${CXX} ${CXXFLAGS} -c test.cpp -o obj/test.o
+test: test.cpp $(OBJ)
+	${CXX} ${CXXFLAGS} -o $@ $^
 
-lex.o: lib/lex.cpp
-	${CXX} ${CXXFLAGS} -c lib/lex.cpp -o obj/lex.o
+bm: bm.cpp $(OBJ)
+	${CXX} $< ${CXXFLAGS} ${LDLIBS}  -o $@  $(OBJ)
 
-fill.o: lib/fill.cpp
-	${CXX} ${CXXFLAGS} -c lib/fill.cpp -o obj/fill.o
+obj/%.o: lib/%.cpp
+	${CXX} ${CXXFLAGS} -c -o $@ $^
 
 clean:
-	rm -r obj test
+	rm obj/* test
+
+# https://devhints.io/makefile

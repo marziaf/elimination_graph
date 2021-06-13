@@ -157,3 +157,31 @@ std::vector<Node> get_random_graph(int n, int e) {
   }
   return G;
 }
+
+struct Results {
+  std::string test_name;
+  std::vector<Node> original_graph;
+  Order ord;
+  Elimination_graph elimination_graph;
+  int expected_num_added_edges;
+
+  Results(std::string name, std::vector<Node> G, int e)
+      : test_name(name), original_graph(G), expected_num_added_edges(e){};
+};
+
+std::vector<Results>
+get_test_results(Order (*lexfun)(const std::vector<Node> &)) {
+  std::vector<Results> tests;
+  tests.push_back(Results("list", get_list_graph(), 0));
+  tests.push_back(Results("triangulated", get_perfect_elimination_graph(), 0));
+  tests.push_back(Results("tree", get_tree(), 0));
+  tests.push_back(Results("non-triangulated", get_nontriang_graph(), 2));
+  tests.push_back(Results("ring", get_ring_graph(), 2));
+  tests.push_back(Results("many fill edges", get_I_love_edges_graph(), 5));
+
+  for (auto &test : tests) {
+    test.ord = lexfun(test.original_graph);
+    test.elimination_graph = fill(test.original_graph, test.ord);
+  }
+  return tests;
+}

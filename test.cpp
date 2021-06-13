@@ -5,21 +5,8 @@
 #include <assert.h>
 #include <cstdlib>
 #include <iostream>
-#include <set>
 #include <stdio.h>
-#include <unordered_set>
 #include <vector>
-
-struct Results {
-  std::string test_name;
-  std::vector<Node> original_graph;
-  Order ord;
-  Elimination_graph elimination_graph;
-  int expected_num_added_edges;
-
-  Results(std::string name, std::vector<Node> G, int e)
-      : test_name(name), original_graph(G), expected_num_added_edges(e){};
-};
 
 void print_graph(const std::vector<Node> &G) {
   for (Node node : G) {
@@ -61,23 +48,6 @@ void print_results(const std::vector<Results> &res) {
     print(test);
     printf("-----------------------\n");
   }
-}
-
-std::vector<Results>
-get_test_results(Order (*lexfun)(const std::vector<Node> &)) {
-  std::vector<Results> tests;
-  tests.push_back(Results("list", get_list_graph(), 0));
-  tests.push_back(Results("triangulated", get_perfect_elimination_graph(), 0));
-  tests.push_back(Results("tree", get_tree(), 0));
-  tests.push_back(Results("non-triangulated", get_nontriang_graph(), 2));
-  tests.push_back(Results("ring", get_ring_graph(), 2));
-  tests.push_back(Results("many fill edges", get_I_love_edges_graph(), 5));
-
-  for (auto &test : tests) {
-    test.ord = lexfun(test.original_graph);
-    test.elimination_graph = fill(test.original_graph, test.ord);
-  }
-  return tests;
 }
 
 void run_test(const std::vector<Results> &res) {

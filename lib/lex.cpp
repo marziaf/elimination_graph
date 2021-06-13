@@ -76,10 +76,8 @@ Order lexm(const std::vector<Node> &G) {
     add_in_order(ord, card, highest_node);
     reached[highest_node] = true;
     // adjacents' label update
-    printf("\nHIGHEST: %c\n", G[highest_node].id);
     for (int adj : G[highest_node].adj) {
       if (!reached[adj]) {
-        printf("pushing %c on level %f\n", G[adj].id, labels[adj]);
         reach[labels[adj]].push_back(adj);
         reached[adj] = true;
         labels[adj] += 0.5f;
@@ -92,15 +90,12 @@ Order lexm(const std::vector<Node> &G) {
       while (!reach[level].empty()) {
         int w = reach[level].back();
         reach[level].pop_back();
-        printf("Popped %c\n", G[w].id);
 
         for (int adj_w : G[w].adj) {
           if (!reached[adj_w]) {
-            printf("Considering adj %c\n", G[adj_w].id);
 
             reached[adj_w] = true;
             if (labels[adj_w] < level) { // connected to v by a chain
-              printf("pushing %c on level %d\n", G[adj_w].id, level);
               reach[labels[adj_w]].push_back(adj_w);
               labels[adj_w] += 0.5f;
             } else {
