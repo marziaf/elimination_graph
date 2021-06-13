@@ -102,6 +102,12 @@ std::vector<Node> get_I_love_edges_graph() {
   return G;
 }
 
+void check_graph_connected(const std::vector<Node> &g) {
+  for (Node n : g) {
+    assert(!n.adj.empty());
+  }
+}
+
 // Returns a random graph of n nodes and e edges
 std::vector<Node> get_random_graph(int n, int e) {
   srand(time(NULL));
@@ -149,5 +155,7 @@ std::vector<Node> get_random_graph(int n, int e) {
         G[r].adj.insert(c);
     }
   }
+  check_graph_connected(G);
+
   return G;
 }

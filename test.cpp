@@ -165,6 +165,10 @@ std::vector<Results> get_test_results() {
   tests.push_back(Results("random n=10, e=25", get_random_graph(10, 25), -1));
   tests.push_back(Results("random n=15, e=80", get_random_graph(15, 80), -1));
   tests.push_back(Results("random n=20, e=19", get_random_graph(20, 19), -1));
+  tests.push_back(Results("random n=31, e=201", get_random_graph(31, 201), -1));
+  tests.push_back(Results("random n=52, e=94", get_random_graph(52, 94), -1));
+  tests.push_back(
+      Results("random n=100, e=3681", get_random_graph(100, 3681), -1));
 
   for (auto &test : tests) {
     test.ord_lexm = lexm(test.original_graph);
@@ -176,8 +180,16 @@ std::vector<Results> get_test_results() {
 }
 
 void run_triangulation_test(const std::vector<Results> &res) {
+  printf("LEXM\n");
   for (auto test : res) {
-    if (check_triangulation(test, LEXM) && check_triangulation(test, LEXP))
+    if (check_triangulation(test, LEXM))
+      std::cout << test.test_name << ": passed" << std::endl;
+    else
+      std::cout << test.test_name << ": *****FAILED*****" << std::endl;
+  }
+  printf("LEXP\n");
+  for (auto test : res) {
+    if (check_triangulation(test, LEXP))
       std::cout << test.test_name << ": passed" << std::endl;
     else
       std::cout << test.test_name << ": *****FAILED*****" << std::endl;
