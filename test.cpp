@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <cstdlib>
 #include <iostream>
+#include <iterator>
 #include <stdio.h>
 #include <vector>
 
@@ -56,7 +57,7 @@ bool check_minimality(const Results &res) {
     Node n2 = g.filled_graph[f.second];
     std::vector<int> vertices;
     std::set_intersection(n1.adj.begin(), n1.adj.end(), n2.adj.begin(),
-                          n2.adj.end(), vertices.begin());
+                          n2.adj.end(), std::back_inserter(vertices));
     for (int v1 : vertices) {
       for (int v2 : vertices) {
         if (g.filled_graph[v1].adj.find(v2) != g.filled_graph[v1].adj.end() ||
@@ -164,6 +165,7 @@ std::vector<Results> get_test_results() {
   tests.push_back(Results("non-triangulated", get_nontriang_graph(), 1));
   tests.push_back(Results("ring", get_ring_graph(), 2));
   tests.push_back(Results("many fill edges", get_I_love_edges_graph(), 5));
+  /*
   tests.push_back(Results("random n=4, e=6", get_random_graph(4, 6), 0));
   tests.push_back(Results("random n=5, e=7", get_random_graph(5, 7), -1));
   tests.push_back(Results("random n=10, e=25", get_random_graph(10, 25), -1));
@@ -173,6 +175,7 @@ std::vector<Results> get_test_results() {
   tests.push_back(Results("random n=52, e=94", get_random_graph(52, 94), -1));
   tests.push_back(
       Results("random n=100, e=3681", get_random_graph(100, 3681), -1));
+      */
 
   for (auto &test : tests) {
     std::tie(test.ord_lexm, test.elimination_graph_lexm) =
@@ -186,7 +189,7 @@ std::vector<Results> get_test_results() {
 void run_triangulation_test(const std::vector<Results> &res) {
   printf("LEXM\n");
   for (auto test : res) {
-    if (check_triangulation(test, LEXM)) // && check_minimality(test))
+    if (check_triangulation(test, LEXM) && check_minimality(test))
       std::cout << test.test_name << ": passed" << std::endl;
     else
       std::cout << test.test_name << ": *****FAILED*****" << std::endl;
@@ -203,5 +206,5 @@ void run_triangulation_test(const std::vector<Results> &res) {
 int main() {
   auto results = get_test_results();
   run_triangulation_test(results);
-  // print_results(results);
+  print_results(results);
 }
