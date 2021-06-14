@@ -27,19 +27,20 @@ void run_test_minimum_ordering(const Results &test, int type) {
     if (g.new_edges.size() == 0)
       std::cout << "minimum with " << type_string << std::endl;
     else
-      printf("unknown minimality\n");
+      printf("unknown minimum\n");
   } else {
     if (test.min_num_added_edges != g.new_edges.size())
-      std::cout << "***NOT MINIMUM with " << type_string << "****" << std::endl;
+      std::cout << "not minimum " << type_string << std::endl;
     else
       std::cout << "minimum with " << type_string << std::endl;
   }
 }
 
-// check if the graph after lex+fill is a perfect elimination grap
+// check if the graph after lexp+fill / lexm is a perfect elimination graph
 // a graph is perfectly triangulated for order alpha if removing the edges in
 // order it remains triangulated
 bool check_triangulation(const Results &res, int type) {
+
   Order order;
   std::vector<Node> graph;
   if (type == LEXM) {
@@ -49,11 +50,11 @@ bool check_triangulation(const Results &res, int type) {
     order = res.ord_lexp;
     graph = res.elimination_graph_lexp.filled_graph;
   }
+
   for (int node : order.alpha) {
     // virtually delete the node and the edges
     // check that its remaining adjacents are interconnected through the adj
     // with minor cardinality
-
     for (int adj1 : graph[node].adj)
       for (int adj2 : graph[node].adj)
         if (order.alphainv[adj1] > order.alphainv[node] &&
@@ -65,6 +66,11 @@ bool check_triangulation(const Results &res, int type) {
     return true;
   }
 }
+
+// Check minimal triangulation
+// a graph has a minimal triangulation F iff each f in F is a unique chord of a
+// 4-cycle
+bool check_minimality(const Results &res) {}
 
 void print_graph(const std::vector<Node> &G) {
   for (Node node : G) {
@@ -134,7 +140,7 @@ std::vector<Results> get_test_results() {
   tests.push_back(Results("list", get_list_graph(), 0));
   tests.push_back(Results("triangulated", get_perfect_elimination_graph(), 0));
   tests.push_back(Results("tree", get_tree(), 0));
-  tests.push_back(Results("non-triangulated", get_nontriang_graph(), 2));
+  tests.push_back(Results("non-triangulated", get_nontriang_graph(), 1));
   tests.push_back(Results("ring", get_ring_graph(), 2));
   tests.push_back(Results("many fill edges", get_I_love_edges_graph(), 5));
   tests.push_back(Results("random n=4, e=6", get_random_graph(4, 6), 0));
@@ -159,7 +165,7 @@ std::vector<Results> get_test_results() {
 void run_triangulation_test(const std::vector<Results> &res) {
   printf("LEXM\n");
   for (auto test : res) {
-    if (check_triangulation(test, LEXM))
+    if (check_triangulation(test, LEXM)) // && check_minimality(test))
       std::cout << test.test_name << ": passed" << std::endl;
     else
       std::cout << test.test_name << ": *****FAILED*****" << std::endl;

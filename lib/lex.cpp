@@ -59,11 +59,11 @@ Order lexp(const std::vector<Node> &G) {
 }
 
 void update_gstar(Elimination_graph &elim, int from, int to) {
-  if (elim.filled_graph[from].adj.find(to) !=
+  if (elim.filled_graph[from].adj.find(to) ==
       elim.filled_graph[from].adj.end()) {
     elim.new_edges.push_back({from, to});
-    elim.filled_graph[from].adj.insert(to);
   }
+  elim.filled_graph[from].adj.insert(to);
 }
 
 /**
@@ -72,23 +72,26 @@ void update_gstar(Elimination_graph &elim, int from, int to) {
 std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G) {
   int n = G.size();
   Order ord = Order(n);
-  Elimination_graph elim = Elimination_graph(G);
+  Elimination_graph elim = Elimination_graph();
+  for (Node n : G) {
+    n.adj = {};
+    elim.filled_graph.push_back(n);
+  }
   std::vector<float> labels(n);
   // reach[l] = {nodes reachable from a node with label l}
-  std::vector<std::vector<int>> reach;
   std::vector<int> reached(n, false);
 
   // Assign cardinalities from the highest
   int highest_node = 0;
   float highest_lab = 0;
   for (int card = n - 1; card >= 0; --card) {
-    reach.resize(highest_lab + 2);
-
     // Set the cardinality of the node with highest label
     add_in_order(ord, card, highest_node);
     reached[highest_node] = true;
+    std::vector<std::vector<int>> reach(highest_lab + 1);
+
     // adjacents' label update
-    for (int adj : G[highest_node].adj) { // TODO should I use filled graph?
+    for (int adj : elim.filled_graph[highest_node].adj) {
       if (!reached[adj]) {
         reach[labels[adj]].push_back(adj);
         reached[adj] = true;
@@ -104,7 +107,7 @@ std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G) {
         int w = reach[level].back();
         reach[level].pop_back();
 
-        for (int adj_w : G[w].adj) {
+        for (int adj_w : elim.filled_graph[w].adj) {
           if (!reached[adj_w]) {
 
             reached[adj_w] = true;
