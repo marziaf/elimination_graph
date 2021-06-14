@@ -58,9 +58,21 @@ Order lexp(const std::vector<Node> &G) {
   return order;
 }
 
-Order lexm(const std::vector<Node> &G) {
+void update_gstar(Elimination_graph &elim, int from, int to) {
+  if (elim.filled_graph[from].adj.find(to) !=
+      elim.filled_graph[from].adj.end()) {
+    elim.new_edges.push_back({from, to});
+    elim.filled_graph[from].adj.insert(to);
+  }
+}
+
+/**
+ * returns the elimination order for the graph G and also the fill-in graph
+ */
+std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G) {
   int n = G.size();
   Order ord = Order(n);
+  Elimination_graph elim = Elimination_graph(G);
   std::vector<float> labels(n);
   // reach[l] = {nodes reachable from a node with label l}
   std::vector<std::vector<int>> reach;
@@ -76,11 +88,12 @@ Order lexm(const std::vector<Node> &G) {
     add_in_order(ord, card, highest_node);
     reached[highest_node] = true;
     // adjacents' label update
-    for (int adj : G[highest_node].adj) {
+    for (int adj : G[highest_node].adj) { // TODO should I use filled graph?
       if (!reached[adj]) {
         reach[labels[adj]].push_back(adj);
         reached[adj] = true;
         labels[adj] += 0.5f;
+        update_gstar(elim, highest_node, adj);
       }
     }
     // search the chains from highest_node (begin chain) to each unnumbered
@@ -98,6 +111,7 @@ Order lexm(const std::vector<Node> &G) {
             if (labels[adj_w] < level) { // connected to v by a chain
               reach[labels[adj_w]].push_back(adj_w);
               labels[adj_w] += 0.5f;
+              update_gstar(elim, highest_node, adj_w);
             } else {
               reach[level].push_back(adj_w);
             }
@@ -143,5 +157,5 @@ Order lexm(const std::vector<Node> &G) {
     highest_node = sorted_labels[0].first;
     highest_lab = labels[sorted_labels[0].first];
   }
-  return ord;
+  return {ord, elim};
 }

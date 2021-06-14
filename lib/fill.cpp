@@ -29,7 +29,8 @@ Elimination_graph fill(std::vector<Node> G, const Order &ord) {
       // Update with fill in by connecting next_in_adj to adj arcs
       for (int adj : elim.filled_graph[node].adj) {
         if (ord.alphainv[adj] > best_card &&
-            G[best_card_pos].adj.find(adj) == G[best_card_pos].adj.end()) {
+            elim.filled_graph[best_card_pos].adj.find(adj) ==
+                elim.filled_graph[best_card_pos].adj.end()) {
           elim.new_edges.push_back({best_card_pos, adj});
           elim.filled_graph[best_card_pos].adj.insert(adj);
         }

@@ -18,17 +18,18 @@ struct Order {
   Order() {}
 };
 
-struct Lex_result {
-  std::vector<Node> simplified_graph;
-  Order order;
+struct Elimination_graph {
+  std::vector<Node> filled_graph;
+  std::vector<std::pair<int, int>> new_edges;
 
-  Lex_result(int n) : simplified_graph(n), order(Order(n)) {}
+  Elimination_graph() {}
+  Elimination_graph(std::vector<Node> g) : filled_graph(g) {}
 };
 
 /**
  * return the elimination order for the graph G
  */
 Order lexp(const std::vector<Node> &G);
-Order lexm(const std::vector<Node> &G);
+std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G);
 
 #endif
