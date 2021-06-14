@@ -9,7 +9,7 @@
 #include <vector>
 
 /**
- * Put node in order position pos
+ *
  */
 void add_in_order(Order &ord, int card, int node_pos) {
   assert(card < ord.alpha.size() && card >= 0);
@@ -66,6 +66,36 @@ void update_gstar(Elimination_graph &elim, int from, int to) {
   elim.filled_graph[from].adj.insert(to);
 }
 
+void countSort(std::vector<std::pair<int, float>> &vec, int div) {
+  int count[10] = {0};
+  // count the occurences of each digit
+  for (int i = 0; i < vec.size(); i++)
+    count[(int)(vec[i].second / div) % 10]++;
+  // get the index where to put the first element with a certain digit
+  int sum = 0;
+  int indices[10] = {0};
+  for (int i = 0; i < 10; i++) {
+    indices[i] = sum + count[i];
+    sum = indices[i];
+  }
+  std::vector<std::pair<int, float>> tmp(vec.size());
+  for (auto v : vec)
+    tmp[indices[(int)(v.second / div) % 10]++] = v;
+  vec = tmp;
+}
+
+void radix_sort(std::vector<std::pair<int, float>> &vec) {
+  // find the max to know how many digits are there at most
+  float max = -1;
+  for (auto v : vec)
+    if (v.second > max)
+      max = v.second;
+
+  for (int e = 0.1; e < max; e *= 10) {
+    countSort(vec, e);
+  }
+}
+
 /**
  * returns the elimination order for the graph G and also the fill-in graph
  */
@@ -100,8 +130,8 @@ std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G) {
       }
     }
     // search the chains from highest_node (begin chain) to each unnumbered
-    // vertex w (end_chain) with a chain with labels < label(w) start the search
-    // from the highest labels for efficiency
+    // vertex w (end_chain) with a chain with labels < label(w) start the
+    // search from the highest labels for efficiency
     for (int level = highest_lab; level >= 0; level--) {
       while (!reach[level].empty()) {
         int w = reach[level].back();
@@ -122,7 +152,6 @@ std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G) {
         }
       }
     }
-    // reach.clear();
     std::vector<std::pair<int, float>> sorted_labels;
     // reset reached
     // don't consider yet reached node labels
@@ -139,10 +168,7 @@ std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G) {
       sorted_labels.push_back({i, labels[i]});
 
     // sort labels
-    std::sort(sorted_labels.begin(), sorted_labels.end(),
-              [](std::pair<int, float> a, std::pair<int, float> b) {
-                return a.second > b.second;
-              }); // TODO make custom sort
+    radix_sort(sorted_labels);
     // rename labels to integers
     float old_lab = -1;
     int updated_lab = -1;

@@ -24,7 +24,6 @@ struct Elimination_graph {
 
   Elimination_graph() {}
   Elimination_graph(std::vector<Node> g) : filled_graph(g) {}
-  Elimination_graph(int n) : filled_graph(n) {}
 };
 
 /**

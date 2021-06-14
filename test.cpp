@@ -2,6 +2,7 @@
 #include "lib/graph.h"
 #include "lib/lex.h"
 #include "test_cases.h"
+#include <algorithm>
 #include <assert.h>
 #include <cstdlib>
 #include <iostream>
@@ -10,31 +11,6 @@
 
 #define LEXM 0
 #define LEXP 1
-
-// check if the new graph is minimum
-void run_test_minimum_ordering(const Results &test, int type) {
-  std::string type_string;
-  Elimination_graph g;
-  if (type == LEXM) {
-    type_string = "lexm";
-    g = test.elimination_graph_lexm;
-  } else {
-    type_string = "lexp";
-    g = test.elimination_graph_lexp;
-  }
-
-  if (test.min_num_added_edges < 0) {
-    if (g.new_edges.size() == 0)
-      std::cout << "minimum with " << type_string << std::endl;
-    else
-      printf("unknown minimum\n");
-  } else {
-    if (test.min_num_added_edges != g.new_edges.size())
-      std::cout << "not minimum " << type_string << std::endl;
-    else
-      std::cout << "minimum with " << type_string << std::endl;
-  }
-}
 
 // check if the graph after lexp+fill / lexm is a perfect elimination graph
 // a graph is perfectly triangulated for order alpha if removing the edges in
@@ -70,7 +46,52 @@ bool check_triangulation(const Results &res, int type) {
 // Check minimal triangulation
 // a graph has a minimal triangulation F iff each f in F is a unique chord of a
 // 4-cycle
-bool check_minimality(const Results &res) {}
+bool check_minimality(const Results &res) {
+  Elimination_graph g = res.elimination_graph_lexm;
+  for (auto f : g.new_edges) {
+    // Find the triangles that share f as common edge by intersecting the
+    // adjacents of the two nodes of the edge
+    // Store the nodes not in f and check that no edge connects them
+    Node n1 = g.filled_graph[f.first];
+    Node n2 = g.filled_graph[f.second];
+    std::vector<int> vertices;
+    std::set_intersection(n1.adj.begin(), n1.adj.end(), n2.adj.begin(),
+                          n2.adj.end(), vertices.begin());
+    for (int v1 : vertices) {
+      for (int v2 : vertices) {
+        if (g.filled_graph[v1].adj.find(v2) != g.filled_graph[v1].adj.end() ||
+            g.filled_graph[v2].adj.find(v1) != g.filled_graph[v2].adj.end())
+          return false;
+      }
+    }
+  }
+  return true;
+}
+
+// check if the new graph is minimum
+void run_test_minimum_ordering(const Results &test, int type) {
+  std::string type_string;
+  Elimination_graph g;
+  if (type == LEXM) {
+    type_string = "lexm";
+    g = test.elimination_graph_lexm;
+  } else {
+    type_string = "lexp";
+    g = test.elimination_graph_lexp;
+  }
+
+  if (test.min_num_added_edges < 0) {
+    if (g.new_edges.size() == 0)
+      std::cout << "minimum with " << type_string << std::endl;
+    else
+      printf("unknown minimum\n");
+  } else {
+    if (test.min_num_added_edges != g.new_edges.size())
+      std::cout << "not minimum " << type_string << std::endl;
+    else
+      std::cout << "minimum with " << type_string << std::endl;
+  }
+}
 
 void print_graph(const std::vector<Node> &G) {
   for (Node node : G) {
