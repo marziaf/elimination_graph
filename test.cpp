@@ -162,7 +162,7 @@ std::vector<Results> get_test_results() {
   tests.push_back(Results("list", get_list_graph(), 0));
   tests.push_back(Results("triangulated", get_perfect_elimination_graph(), 0));
   tests.push_back(Results("tree", get_tree(), 0));
-  tests.push_back(Results("non-triangulated", get_nontriang_graph(), 1));
+  tests.push_back(Results("non-triangulated", get_nontriang_graph(), 2));
   tests.push_back(Results("ring", get_ring_graph(), 2));
   tests.push_back(Results("many fill edges", get_I_love_edges_graph(), 5));
   /*

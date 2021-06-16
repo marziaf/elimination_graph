@@ -58,13 +58,13 @@ Order lexp(const std::vector<Node> &G) {
   return order;
 }
 
-void update_gstar(Elimination_graph &elim, int from, int to,
-                  const std::vector<Node> &G) {
-  if (G[from].adj.find(to) == G[from].adj.end()) {
+void update_gstar(Elimination_graph &elim, int from, int to) {
+  auto &g = elim.filled_graph;
+  if (g[from].adj.find(to) == g[from].adj.end()) {
     elim.new_edges.push_back({from, to});
+    g[from].adj.insert(to);
+    g[to].adj.insert(from);
   }
-  elim.filled_graph[from].adj.insert(to);
-  elim.filled_graph[to].adj.insert(from);
 }
 
 void countSort(std::vector<std::pair<int, int>> &vec, float div) {
@@ -123,6 +123,21 @@ void radix_sort_and_relabel(std::vector<float> &labels) {
   for (auto p : pos)
     labels[p.first] = p.second;
 }
+/**
+ * Get node with highest cardinality
+ */
+int get_highest_node(std::vector<float> labels) {
+  int n = labels.size();
+  int highest_node = -1;
+  float highest_lab = -1;
+  for (int i = 0; i < n; i++) {
+    if (labels[i] > highest_lab) {
+      highest_node = i;
+      highest_lab = labels[i];
+    }
+  }
+  return highest_node;
+}
 
 /**
  * returns the elimination order for the graph G and also the fill-in graph
@@ -130,61 +145,57 @@ void radix_sort_and_relabel(std::vector<float> &labels) {
 std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G) {
   int n = G.size();
   Order ord = Order(n);
-  Elimination_graph elim = Elimination_graph();
-  for (Node node : G) {
-    node.adj = {};
-    elim.filled_graph.push_back(node);
-  }
+  Elimination_graph elim = Elimination_graph(G);
   std::vector<float> labels(n);
-  // reach[l] = {nodes reachable from a node with label l}
   std::vector<int> reached(n, false);
+  int highest_node;
 
   // Assign cardinalities from the highest
   for (int card = n - 1; card >= 0; --card) {
-    // set new high values
-    int highest_node = -1;
-    float highest_lab = -1;
-    for (int i = 0; i < n; i++) {
-      if (labels[i] > highest_lab) {
-        highest_node = i;
-        highest_lab = labels[i];
-      }
-    }
-    // Set the cardinality of the node with highest label
+    highest_node = get_highest_node(labels);
     add_in_order(ord, card, highest_node);
     reached[highest_node] = true;
-    std::vector<std::vector<int>> reach(highest_lab + 1);
-
-    // adjacents' label update
+    // reach[l] = {nodes reachable from a node with label l}
+    std::vector<std::vector<int>> reach(labels[highest_node] + 1);
+    // save the highest label of the adjacents
+    int level = 0;
+    // adjacents' label update:
+    // by definition there is a chain v->adj(v)
     for (int adj : G[highest_node].adj) {
       if (!reached[adj]) {
+        if (labels[adj] > level)
+          level = labels[adj];
         reach[labels[adj]].push_back(adj);
         reached[adj] = true;
         labels[adj] += 0.5f;
-        update_gstar(elim, highest_node, adj, G);
       }
     }
-    // search the chains from highest_node (begin chain) to each unnumbered
-    // vertex w (end_chain) with a chain with labels < label(w) start the
-    // search from the highest labels for efficiency
-    for (int level = highest_lab; level >= 0; level--) {
-      while (!reach[level].empty()) {
-        int w = reach[level].back();
-        reach[level].pop_back();
 
-        for (int adj_w : G[w].adj) {
-          if (!reached[adj_w]) {
+    while (level > 0 || level == 0 && !reach[0].empty()) {
+      int w = reach[level].back();
+      reach[level].pop_back();
 
-            reached[adj_w] = true;
-            if (labels[adj_w] < level) { // connected to v by a chain
-              reach[labels[adj_w]].push_back(adj_w);
-              labels[adj_w] += 0.5f;
-              update_gstar(elim, highest_node, adj_w, G);
-            } else {
-              reach[level].push_back(adj_w);
-            }
+      for (int adj_w : G[w].adj) {
+        if (!reached[adj_w]) {
+          reached[adj_w] = true;
+
+          if (labels[adj_w] > level) {
+            // If lab(adjw) > lab(w), there is a chain.
+            // There can be a chain v-w-adjw-next
+            // only if next > max(lab(w), lab(adj_w) ) = lab(adj_w)
+            reach[labels[adj_w]].push_back(adj_w);
+            level = labels[adj_w];
+            labels[adj_w] += 0.5f;
+            update_gstar(elim, highest_node, adj_w);
+          } else {
+            // if lab(adjw) <= lab(w), there can be a chain v-w-adjw-next
+            // only if next > max(lab(w), level) = level
+            reach[level].push_back(adj_w);
           }
         }
+      }
+      while (level >= 0 && reach[level].empty()) {
+        level--;
       }
     }
 

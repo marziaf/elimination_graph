@@ -13,4 +13,5 @@ struct Node {
   Node(char ID, int position) : id(ID), pos(position) {}
   Node() : id(0), pos(-1) {}
 };
+
 #endif
