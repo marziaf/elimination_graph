@@ -60,7 +60,7 @@ Order lexp(const std::vector<Node> &G) {
 
 void update_gstar(Elimination_graph &elim, int from, int to) {
   auto &g = elim.filled_graph;
-  if (g[from].adj.find(to) == g[from].adj.end()) {
+  if (from != to && g[from].adj.find(to) == g[from].adj.end()) {
     elim.new_edges.push_back({from, to});
     g[from].adj.insert(to);
     g[to].adj.insert(from);
@@ -139,6 +139,25 @@ int get_highest_node(std::vector<float> labels) {
   return highest_node;
 }
 
+struct Edge {
+  int n1;
+  int n2;
+  inline bool operator==(Edge e) const {
+    if ((n1 == e.n1 && n2 == e.n2) || (n1 == e.n2 && n2 == e.n1))
+      return true;
+    return false;
+  }
+};
+class EgdeHash {
+public:
+  size_t operator()(const Edge e) const {
+    size_t half_size_bit = sizeof(int) * 4;
+    int min = e.n1 < e.n2 ? e.n1 : e.n2;
+    int max = e.n1 < e.n2 ? e.n2 : e.n1;
+    return min + 2 << half_size_bit * max;
+  }
+};
+
 /**
  * returns the elimination order for the graph G and also the fill-in graph
  */
@@ -147,70 +166,121 @@ std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G) {
   Order ord = Order(n);
   Elimination_graph elim = Elimination_graph(G);
   std::vector<float> labels(n);
-  std::vector<int> reached(n, false);
+  std::vector<bool> updated(n);
   int highest_node;
 
   // Assign cardinalities from the highest
   for (int card = n - 1; card >= 0; --card) {
     highest_node = get_highest_node(labels);
     add_in_order(ord, card, highest_node);
-    reached[highest_node] = true;
-    // reach[l] = {nodes reachable from a node with label l}
-    std::vector<std::vector<int>> reach(labels[highest_node] + 1);
-    // save the highest label of the adjacents
-    int level = 0;
-    // adjacents' label update:
-    // by definition there is a chain v->adj(v)
+
+    // Time-optimized priority queue to store the nodes to visit
+    // Ordered according the best path needed to reach the node: the nodes store
+    // the information about the path with smallest labels that reaches highnode
+    std::vector<std::vector<int>> search(labels[highest_node] + 1);
+    std::unordered_set<Edge, EgdeHash> visited_edges;
+    // Save what is the best path (minimum label nodes path) encountered
+    std::vector<int> best_path(n, labels[highest_node] + 1);
+    // Use level to access the search priority queue
+    int level = labels[highest_node] + 1;
+    // Push the adjacents to the node as first elements of the queue
     for (int adj : G[highest_node].adj) {
-      if (!reached[adj]) {
-        if (labels[adj] > level)
-          level = labels[adj];
-        reach[labels[adj]].push_back(adj);
-        reached[adj] = true;
-        labels[adj] += 0.5f;
+      if (labels[adj] >= 0) {
+        search[(int)labels[adj]].push_back(adj);
+        best_path[adj] = (int)labels[adj];
+        labels[adj] += 0.5;
+        updated[adj] = true;
+        level = std::min(level, best_path[adj]);
       }
     }
 
-    while (level > 0 || level == 0 && !reach[0].empty()) {
-      int w = reach[level].back();
-      reach[level].pop_back();
-
-      for (int adj_w : G[w].adj) {
-        if (!reached[adj_w]) {
-          reached[adj_w] = true;
-
-          if (labels[adj_w] > level) {
-            // If lab(adjw) > lab(w), there is a chain.
-            // There can be a chain v-w-adjw-next
-            // only if next > max(lab(w), lab(adj_w) ) = lab(adj_w)
-            reach[labels[adj_w]].push_back(adj_w);
-            level = labels[adj_w];
-            labels[adj_w] += 0.5f;
-            update_gstar(elim, highest_node, adj_w);
+    while (level < labels[highest_node] ||
+           (level == labels[highest_node] && !search[level].empty())) {
+      // Pop the elements on the queue until it is empty
+      assert(!search[level].empty());
+      int current = search[level].back();
+      search[level].pop_back();
+      // Visit the adjacents not in alphainv and which are connected to current
+      // via a not yet visited edge
+      for (int adj : G[current].adj) {
+        if (ord.alphainv[adj] < 0 &&
+            visited_edges.find({current, adj}) == visited_edges.end()) {
+          // Mark the new edge as visited
+          visited_edges.insert({current, adj});
+          // Get the shortest path to reach adj
+          int best_path_to_reach = std::min(best_path[current], best_path[adj]);
+          // If the label is higher than the max label on the path to reach
+          // highnode (stored in best path), there is a chain highnode->...->adj
+          if (labels[adj] > best_path_to_reach && !updated[adj]) {
+            labels[adj] += 0.5;
+            update_gstar(elim, highest_node, adj);
+            best_path[adj] = (int)labels[adj];
+            updated[adj] = true;
           } else {
-            // if lab(adjw) <= lab(w), there can be a chain v-w-adjw-next
-            // only if next > max(lab(w), level) = level
-            reach[level].push_back(adj_w);
+            best_path[adj] = best_path_to_reach;
           }
+          search[best_path[adj]].push_back(adj);
         }
       }
-      while (level >= 0 && reach[level].empty()) {
-        level--;
+      while (level <= labels[highest_node] && search[level].empty()) {
+        level++;
       }
     }
-
-    // reset reached
+    // reset updated
     // don't consider yet reached node labels
-    for (Node node : G) {
+    for (Node node : G)
       if (ord.alphainv[node.pos] >= 0) {
-        reached[node.pos] = true;
         labels[node.pos] = -1;
+        updated[node.pos] = true;
       } else {
-        reached[node.pos] = false;
+        updated[node.pos] = false;
       }
-    }
+
     // sort labels and make the labels integer
     radix_sort_and_relabel(labels);
   }
   return {ord, elim};
 }
+
+/*
+    // save the highest label of the adjacents
+int level = 0;
+// adjacents' label update:
+// by definition there is a chain v->adj(v)
+for (int adj : G[highest_node].adj) {
+  if (!reached[adj]) {
+    if (labels[adj] > level)
+      level = labels[adj];
+    reach[labels[adj]].push_back(adj);
+    reached[adj] = true;
+    labels[adj] += 0.5f;
+  }
+}
+while (level > 0 || level == 0 && !reach[0].empty()) {
+  int w = reach[level].back();
+  reach[level].pop_back();
+  
+  for (int adj_w : G[w].adj) {
+    if (!reached[adj_w]) {
+      reached[adj_w] = true;
+
+      if (labels[adj_w] > level) {
+        // If lab(adjw) > level, there is a chain.
+        // There can be a chain v-w-adjw-next
+        // only if next > max(lab(adjw), level ) = lab(adjw)
+        //
+        // If lab(adjw) <= lab(w), there can be a chain v-w-adjw-next
+        // only if next > max(lab(w), level) = level
+        level = labels[adj_w]; // level has increased
+        reach[level].push_back(adj_w);
+        labels[adj_w] += 0.5f;
+        update_gstar(elim, highest_node, adj_w);
+      }
+      reach[level].push_back(adj_w);
+    }
+  }
+  while (level >= 0 && reach[level].empty()) {
+    level--;
+  }
+}
+*/

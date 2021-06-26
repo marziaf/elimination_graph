@@ -102,6 +102,25 @@ std::vector<Node> get_I_love_edges_graph() {
   return G;
 }
 
+std::vector<Node> get_I_love_edges_minimum_graph() {
+  std::vector<Node> G;
+  const int n = 9;
+  for (int i = 0; i < n; ++i)
+    G.push_back(Node((char)('1' + i), i));
+
+  G[0].adj = {1, 3, 4};
+  G[1].adj = {0, 3, 5, 2};
+  G[2].adj = {6, 5, 1};
+  G[3].adj = {0, 1, 5, 7, 4};
+  G[4].adj = {0, 3, 7};
+  G[5].adj = {1, 2, 7, 6, 8, 3};
+  G[6].adj = {2, 8, 5};
+  G[7].adj = {4, 3, 5, 8};
+  G[8].adj = {5, 6, 7};
+
+  return G;
+}
+
 void check_graph_connected(const std::vector<Node> &g) {
   for (Node n : g) {
     assert(!n.adj.empty());
@@ -126,7 +145,8 @@ std::vector<Node> get_random_graph(int n, int e) {
     int root = (std::rand() % (last_connected_node + 1));
     // create new edges from root to missing nodes
     int first_node = last_connected_node + 1;
-    last_connected_node = first_node + (std::rand() % (n - first_node));
+    last_connected_node =
+        std::min(first_node + (std::rand() % (n - first_node)), n - 1);
 
     for (int child = first_node; child <= last_connected_node; ++child) {
       m[root][child] = true;

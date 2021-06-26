@@ -17,7 +17,7 @@
 // a graph is perfectly triangulated for order alpha if removing the edges in
 // order it remains triangulated
 bool check_triangulation(const Results &res, int type) {
-
+  // std::vector<Node> orig = res.original_graph;
   Order order;
   std::vector<Node> graph;
   if (type == LEXM) {
@@ -29,35 +29,55 @@ bool check_triangulation(const Results &res, int type) {
   }
 
   for (int node : order.alpha) {
-    // virtually delete the node and the edges
-    // check that its remaining adjacents are interconnected through the adj
-    // with minor cardinality
-    for (int adj1 : graph[node].adj)
-      for (int adj2 : graph[node].adj)
-        if (order.alphainv[adj1] > order.alphainv[node] &&
-            (order.alphainv[adj2] > order.alphainv[node]))
-          if (adj1 != adj2 &&
-              graph[adj1].adj.find(adj2) == graph[adj1].adj.end() &&
-              graph[adj2].adj.find(adj1) == graph[adj2].adj.end())
-            return false;
-    return true;
+    // Virtually delete the node and the edges
+    // Check that all its adjacents (not yet eliminated) are directly
+    // interconnected
+    for (int adj1 : graph[node].adj) {
+      for (int adj2 : graph[node].adj) {
+        if (adj1 != adj2 && order.alphainv[adj1] > order.alphainv[node] &&
+            order.alphainv[adj2] > order.alphainv[node] &&
+            graph[adj1].adj.find(adj2) == graph[adj1].adj.end() &&
+            graph[adj2].adj.find(adj1) == graph[adj2].adj.end())
+          return false;
+      }
+    }
   }
+  return true;
+}
+
+bool check_minimality_through_triangulation(Results res) {
+  Elimination_graph &g = res.elimination_graph_lexm;
+
+  for (auto f : g.new_edges) {
+    int n1 = f.first;
+    int n2 = f.second;
+    g.filled_graph[n1].adj.erase(n2);
+    g.filled_graph[n2].adj.erase(n1);
+    if (check_triangulation(res, LEXM))
+      return false;
+    g.filled_graph[n1].adj.insert(n2);
+    g.filled_graph[n2].adj.insert(n1);
+  }
+  return true;
 }
 
 // Check minimal triangulation
-// a graph has a minimal triangulation F iff each f in F is a unique chord of a
-// 4-cycle
+// a graph has a minimal triangulation F iff each f in F is a unique chord of
+// a 4-cycle
 bool check_minimality(const Results &res) {
+  std::vector<Node> orig = res.original_graph;
   Elimination_graph g = res.elimination_graph_lexm;
   for (auto f : g.new_edges) {
     // Find the triangles that share f as common edge by intersecting the
     // adjacents of the two nodes of the edge
     // Store the nodes not in f and check that no edge connects them
-    Node n1 = g.filled_graph[f.first];
-    Node n2 = g.filled_graph[f.second];
+    // Check the cycles on the original graph
+    Node n1 = orig[f.first];
+    Node n2 = orig[f.second];
     std::vector<int> vertices;
     std::set_intersection(n1.adj.begin(), n1.adj.end(), n2.adj.begin(),
                           n2.adj.end(), std::back_inserter(vertices));
+    // check the chords in the new graph
     for (int v1 : vertices) {
       for (int v2 : vertices) {
         if (g.filled_graph[v1].adj.find(v2) != g.filled_graph[v1].adj.end() ||
@@ -159,13 +179,15 @@ void print_results(const std::vector<Results> &res) {
 
 std::vector<Results> get_test_results() {
   std::vector<Results> tests;
+
   tests.push_back(Results("list", get_list_graph(), 0));
   tests.push_back(Results("triangulated", get_perfect_elimination_graph(), 0));
   tests.push_back(Results("tree", get_tree(), 0));
   tests.push_back(Results("non-triangulated", get_nontriang_graph(), 2));
   tests.push_back(Results("ring", get_ring_graph(), 2));
-  tests.push_back(Results("many fill edges", get_I_love_edges_graph(), 5));
-  /*
+  tests.push_back(Results("many fill edges", get_I_love_edges_graph(), 3));
+  tests.push_back(Results("fake minimum many fill edges",
+                          get_I_love_edges_minimum_graph(), 5));
   tests.push_back(Results("random n=4, e=6", get_random_graph(4, 6), 0));
   tests.push_back(Results("random n=5, e=7", get_random_graph(5, 7), -1));
   tests.push_back(Results("random n=10, e=25", get_random_graph(10, 25), -1));
@@ -173,9 +195,9 @@ std::vector<Results> get_test_results() {
   tests.push_back(Results("random n=20, e=19", get_random_graph(20, 19), -1));
   tests.push_back(Results("random n=31, e=201", get_random_graph(31, 201), -1));
   tests.push_back(Results("random n=52, e=94", get_random_graph(52, 94), -1));
-  tests.push_back(
-      Results("random n=100, e=3681", get_random_graph(100, 3681), -1));
-      */
+
+  // tests.push_back(
+  //    Results("random n=100, e=3681", get_random_graph(100, 3681), -1));
 
   for (auto &test : tests) {
     std::tie(test.ord_lexm, test.elimination_graph_lexm) =
@@ -186,10 +208,11 @@ std::vector<Results> get_test_results() {
   return tests;
 }
 
-void run_triangulation_test(const std::vector<Results> &res) {
+void run_tests(const std::vector<Results> &res) {
   printf("LEXM\n");
   for (auto test : res) {
-    if (check_triangulation(test, LEXM) && check_minimality(test))
+    if (check_triangulation(test, LEXM) &&
+        check_minimality_through_triangulation(test))
       std::cout << test.test_name << ": passed" << std::endl;
     else
       std::cout << test.test_name << ": *****FAILED*****" << std::endl;
@@ -205,6 +228,6 @@ void run_triangulation_test(const std::vector<Results> &res) {
 
 int main() {
   auto results = get_test_results();
-  run_triangulation_test(results);
+  run_tests(results);
   print_results(results);
 }
