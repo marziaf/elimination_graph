@@ -129,9 +129,9 @@ void check_graph_connected(const std::vector<Node> &g) {
 
 // Returns a random graph of n nodes and e edges
 std::vector<Node> get_random_graph(int n, int e) {
-  srand(time(NULL));
   // Create an adjacency matrix to create the vertices
-  bool m[n][n] = {false};
+  bool m[n][n];
+  std::fill(*m, *m + n * n, false);
   // create the first n-1 egdes to ensure connectivity property
   // creating a tree involving all edges
   assert(n > 0);
@@ -142,7 +142,7 @@ std::vector<Node> get_random_graph(int n, int e) {
   int last_connected_node = 0;
   while (last_connected_node < n - 1) {
     // get new root from one of the previously connected nodes
-    int root = (std::rand() % (last_connected_node + 1));
+    int root = std::rand() % (last_connected_node + 1);
     // create new edges from root to missing nodes
     int first_node = last_connected_node + 1;
     last_connected_node =

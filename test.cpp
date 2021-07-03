@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <iterator>
+#include <random>
 #include <stdio.h>
 #include <vector>
 
@@ -17,7 +18,6 @@
 // a graph is perfectly triangulated for order alpha if removing the edges in
 // order it remains triangulated
 bool check_triangulation(const Results &res, int type) {
-  // std::vector<Node> orig = res.original_graph;
   Order order;
   std::vector<Node> graph;
   if (type == LEXM) {
@@ -191,13 +191,14 @@ std::vector<Results> get_test_results() {
   tests.push_back(Results("random n=4, e=6", get_random_graph(4, 6), 0));
   tests.push_back(Results("random n=5, e=7", get_random_graph(5, 7), -1));
   tests.push_back(Results("random n=10, e=25", get_random_graph(10, 25), -1));
-  tests.push_back(Results("random n=15, e=80", get_random_graph(15, 80), -1));
   tests.push_back(Results("random n=20, e=19", get_random_graph(20, 19), -1));
-  tests.push_back(Results("random n=31, e=201", get_random_graph(31, 201), -1));
-  tests.push_back(Results("random n=52, e=94", get_random_graph(52, 94), -1));
-
-  // tests.push_back(
-  //    Results("random n=100, e=3681", get_random_graph(100, 3681), -1));
+  for (int i = 0; i < 10; i++) {
+    int n = 2 + std::rand() % 10;
+    int e = (n - 1) + std::rand() % ((n - 1) * n / 2 - (n - 1) + 1);
+    tests.push_back(
+        Results("random n=" + std::to_string(n) + ", e=" + std::to_string(e),
+                get_random_graph(n, e), -1));
+  }
 
   for (auto &test : tests) {
     std::tie(test.ord_lexm, test.elimination_graph_lexm) =
@@ -227,6 +228,8 @@ void run_tests(const std::vector<Results> &res) {
 }
 
 int main() {
+  srand(time(NULL));
+  // srand(0);
   auto results = get_test_results();
   run_tests(results);
   print_results(results);
