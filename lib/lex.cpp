@@ -2,6 +2,7 @@
 #include "graph.h"
 #include <algorithm>
 #include <assert.h>
+#include <deque>
 #include <iostream>
 #include <map>
 #include <stack>
@@ -17,25 +18,33 @@ void add_in_order(Order &ord, int card, int node_pos) {
   ord.alphainv[node_pos] = card;
 }
 
+int find(std::deque<int> &d, int value) {
+  for (int i = 0; i < d.size(); i++) {
+    if (d[i] == value)
+      return i;
+  }
+  return -1;
+}
+
 /**
  * returns the elimination order for the graph G
  */
 Order lexp(const std::vector<Node> &G) {
   const int n = G.size();
   Order order = Order(n);
-  std::stack<std::unordered_set<int>> set_stack;
+  std::stack<std::deque<int>> stack;
 
   // Initialize the stack with the first set containing all the nodes
-  std::unordered_set<int> init_set;
+  std::deque<int> init_set;
   for (Node node : G)
-    init_set.insert(node.pos);
-  set_stack.push(init_set);
+    init_set.push_back(node.pos);
+  stack.push(init_set);
 
   int cardinality = n - 1;
-  while (!set_stack.empty()) {
+  while (!stack.empty()) {
     // get a vertex from the topmost set
-    int node = *set_stack.top().begin();
-    set_stack.top().erase(node);
+    int node = stack.top().front();
+    stack.top().pop_front();
 
     // if it has no cardinality yet, assign it
     if (order.alphainv[node] < 0) {
@@ -43,17 +52,19 @@ Order lexp(const std::vector<Node> &G) {
       cardinality--;
 
       // create a new set with the unvisited adjacents and push it
-      std::unordered_set<int> new_set;
+      std::deque<int> new_set;
       for (int adj : G[node].adj) {
-        set_stack.top().erase(adj);
         if (order.alphainv[adj] < 0)
-          new_set.insert(adj);
+          if (find(stack.top(), adj) >= 0)
+            new_set.push_front(adj);
+          else
+            new_set.push_back(adj);
       }
-      set_stack.push(new_set);
+      stack.push(new_set);
     }
     // remove empty sets
-    while (!set_stack.empty() && set_stack.top().empty())
-      set_stack.pop();
+    while (!stack.empty() && stack.top().empty())
+      stack.pop();
   }
   return order;
 }
@@ -177,29 +188,30 @@ std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G) {
     // Time-optimized priority queue to store the nodes to visit
     // Ordered according the best path needed to reach the node: the nodes store
     // the information about the path with smallest labels that reaches highnode
-    std::vector<std::vector<int>> search(labels[highest_node] + 1);
+    std::vector<std::vector<int>> search_pq(labels[highest_node] + 1);
+    // Don't visit the same edge twice
     std::unordered_set<Edge, EgdeHash> visited_edges;
     // Save what is the best path (minimum label nodes path) encountered
     std::vector<int> best_path(n, labels[highest_node] + 1);
     // Use level to access the search priority queue
     int level = labels[highest_node] + 1;
-    // Push the adjacents to the node as first elements of the queue
+
+    // The nodes will be visisted in order of labels. First insert adjacents
     for (int adj : G[highest_node].adj) {
       if (labels[adj] >= 0) {
-        search[(int)labels[adj]].push_back(adj);
+        search_pq[(int)labels[adj]].push_back(adj);
         best_path[adj] = (int)labels[adj];
         labels[adj] += 0.5;
         updated[adj] = true;
         level = std::min(level, best_path[adj]);
       }
     }
-
+    // Pop elements from the pq starting from lower levels
     while (level < labels[highest_node] ||
-           (level == labels[highest_node] && !search[level].empty())) {
-      // Pop the elements on the queue until it is empty
-      assert(!search[level].empty());
-      int current = search[level].back();
-      search[level].pop_back();
+           (level == labels[highest_node] && !search_pq[level].empty())) {
+      assert(!search_pq[level].empty());
+      int current = search_pq[level].back();
+      search_pq[level].pop_back();
       // Visit the adjacents not in alphainv and which are connected to current
       // via a not yet visited edge
       for (int adj : G[current].adj) {
@@ -207,7 +219,7 @@ std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G) {
             visited_edges.find({current, adj}) == visited_edges.end()) {
           // Mark the new edge as visited
           visited_edges.insert({current, adj});
-          // Get the shortest path to reach adj
+          // Calculate the shortest path to reach adj
           int best_path_to_reach = std::min(best_path[current], best_path[adj]);
           // If the label is higher than the max label on the path to reach
           // highnode (stored in best path), there is a chain highnode->...->adj
@@ -219,10 +231,10 @@ std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G) {
           } else {
             best_path[adj] = best_path_to_reach;
           }
-          search[best_path[adj]].push_back(adj);
+          search_pq[best_path[adj]].push_back(adj);
         }
       }
-      while (level <= labels[highest_node] && search[level].empty()) {
+      while (level <= labels[highest_node] && search_pq[level].empty()) {
         level++;
       }
     }

@@ -1,6 +1,6 @@
 CXX = g++
-CXXFLAGS = -std=c++14 -g -fsanitize=address -lasan 
-DEBUGFLAGS = -Wall -Wextra -pedantic
+CXXFLAGS = -std=c++14 -g 
+DEBUGFLAGS = -Wall -Wextra -pedantic -fsanitize=address -lasan
 LDLIBS = -isystem benchmark/include -Lbenchmark/build/src  -lpthread  -lbenchmark
 
 ODIR=obj
@@ -9,17 +9,17 @@ OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 all: test bm
 
-test: test.cpp $(OBJ) test_cases.o
-	${CXX} ${CXXFLAGS} ${DEBUGFLAGS} -o $@ $^
+test: test.cpp $(OBJ) obj/test_cases.o
+	${CXX} ${CXXFLAGS} ${DEBUGFLAGS}  -o $@ $^
 
-bm: bm.cpp $(OBJ) test_cases.o
-	${CXX} $< ${CXXFLAGS} ${DEBUGFLAGS} ${LDLIBS}  -o $@  $(OBJ) test_cases.o
+bm: bm.cpp $(OBJ) obj/test_cases.o
+	${CXX} $< ${CXXFLAGS}  ${LDLIBS}  -o $@  $(OBJ) obj/test_cases.o
 
-test_cases.o: test_cases.cpp
-	${CXX} ${CXXFLAGS} ${DEBUGFLAGS} -c -o $@ $^
+obj/test_cases.o: test_cases.cpp
+	${CXX} ${CXXFLAGS} -c -o $@ $^
 
 obj/%.o: lib/%.cpp
-	${CXX} ${CXXFLAGS} ${DEBUGFLAGS} -c -o $@ $^
+	${CXX} ${CXXFLAGS} -c -o $@ $^
 
 clean:
 	rm obj/* test

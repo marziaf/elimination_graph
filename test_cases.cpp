@@ -83,6 +83,19 @@ std::vector<Node> get_ring_graph() {
   return G;
 }
 
+std::vector<Node> get_kite_graph() {
+  std::vector<Node> G;
+  const int n = 5;
+  for (int i = 0; i < n; ++i)
+    G.push_back(Node((char)('0' + i), i));
+  G[0].adj = {1, 2, 4};
+  G[1].adj = {0, 2, 3};
+  G[2].adj = {0, 1, 4};
+  G[3].adj = {1};
+  G[4].adj = {2, 0};
+  return G;
+}
+
 std::vector<Node> get_I_love_edges_graph() {
   std::vector<Node> G;
   const int n = 9;

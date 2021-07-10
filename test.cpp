@@ -8,6 +8,7 @@
 #include <iostream>
 #include <iterator>
 #include <random>
+#include <stack>
 #include <stdio.h>
 #include <vector>
 
@@ -39,6 +40,49 @@ bool check_triangulation(const Results &res, int type) {
             graph[adj1].adj.find(adj2) == graph[adj1].adj.end() &&
             graph[adj2].adj.find(adj1) == graph[adj2].adj.end())
           return false;
+      }
+    }
+  }
+  return true;
+}
+
+std::vector<std::vector<int>> find_loop_4(std::vector<Node> G, int start) {
+  std::vector<int> backtrack_stack;
+  std::vector<std::vector<int>> cycles;
+  std::vector<bool> visited(G.size(), false);
+  backtrack_stack.push_back(start);
+  visited[start] = true;
+  while (!backtrack_stack.empty()) {
+    int node = backtrack_stack.back();
+    auto iter = G[node].adj.begin();
+    while (iter != G[node].adj.end() && visited[*iter]) {
+      iter++;
+    }
+    if (iter != G[node].adj.end()) {
+      int adj = *iter;
+      backtrack_stack.push_back(adj);
+      visited[adj] = true;
+      if (backtrack_stack.size() == 4) {
+        if (G[adj].adj.find(start) != G[adj].adj.end()) {
+          cycles.push_back(backtrack_stack);
+        }
+        backtrack_stack.pop_back();
+      }
+    } else {
+      backtrack_stack.pop_back();
+    }
+  }
+
+  return cycles;
+}
+
+bool check_triangulation_without_order(std::vector<Node> G) {
+  for (Node n : G) {
+    std::vector<std::vector<int>> cycles = find_loop_4(G, n.pos);
+    for (auto loop : cycles) {
+      if (G[loop[0]].adj.find(loop[2]) == G[loop[0]].adj.end() &&
+          G[loop[1]].adj.find(loop[3]) == G[loop[1]].adj.end()) {
+        return false;
       }
     }
   }
@@ -185,15 +229,16 @@ std::vector<Results> get_test_results() {
   tests.push_back(Results("tree", get_tree(), 0));
   tests.push_back(Results("non-triangulated", get_nontriang_graph(), 2));
   tests.push_back(Results("ring", get_ring_graph(), 2));
+  tests.push_back(Results("kite", get_kite_graph(), 0));
   tests.push_back(Results("many fill edges", get_I_love_edges_graph(), 3));
   tests.push_back(Results("fake minimum many fill edges",
                           get_I_love_edges_minimum_graph(), 5));
   tests.push_back(Results("random n=4, e=6", get_random_graph(4, 6), 0));
   tests.push_back(Results("random n=5, e=7", get_random_graph(5, 7), -1));
   tests.push_back(Results("random n=10, e=25", get_random_graph(10, 25), -1));
-  tests.push_back(Results("random n=20, e=19", get_random_graph(20, 19), -1));
+  tests.push_back(Results("random n=20, e=19", get_random_graph(20, 19), 0));
   for (int i = 0; i < 10; i++) {
-    int n = 2 + std::rand() % 10;
+    int n = 2 + std::rand() % 50;
     int e = (n - 1) + std::rand() % ((n - 1) * n / 2 - (n - 1) + 1);
     tests.push_back(
         Results("random n=" + std::to_string(n) + ", e=" + std::to_string(e),
@@ -220,7 +265,11 @@ void run_tests(const std::vector<Results> &res) {
   }
   printf("LEXP+FILL\n");
   for (auto test : res) {
-    if (check_triangulation(test, LEXP))
+    bool original_triangulated =
+        check_triangulation_without_order(test.original_graph);
+    if ((original_triangulated &&
+         test.elimination_graph_lexp.new_edges.size() == 0) ||
+        (check_triangulation(test, LEXP)))
       std::cout << test.test_name << ": passed" << std::endl;
     else
       std::cout << test.test_name << ": *****FAILED*****" << std::endl;
