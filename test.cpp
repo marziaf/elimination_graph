@@ -238,7 +238,7 @@ std::vector<Results> get_test_results() {
   tests.push_back(Results("random n=10, e=25", get_random_graph(10, 25), -1));
   tests.push_back(Results("random n=20, e=19", get_random_graph(20, 19), 0));
   for (int i = 0; i < 10; i++) {
-    int n = 2 + std::rand() % 50;
+    int n = 2 + std::rand() % 30;
     int e = (n - 1) + std::rand() % ((n - 1) * n / 2 - (n - 1) + 1);
     tests.push_back(
         Results("random n=" + std::to_string(n) + ", e=" + std::to_string(e),

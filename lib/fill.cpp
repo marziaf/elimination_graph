@@ -18,7 +18,7 @@ Elimination_graph fill(std::vector<Node> G, const Order &ord) {
     // Look for its adjacent with lowest cardinality that comes after node (i.e.
     // not eliminated yet)
     int best_card = n;
-    for (int adj : G[node].adj) {
+    for (int adj : elim.filled_graph[node].adj) {
       int adj_card = ord.alphainv[adj];
       if (adj_card < best_card && adj_card > ord.alphainv[node])
         best_card = adj_card;
