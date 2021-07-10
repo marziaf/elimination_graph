@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <deque>
 #include <iostream>
+#include <list>
 #include <map>
 #include <stack>
 #include <unordered_set>
@@ -32,39 +33,35 @@ int find(std::deque<int> &d, int value) {
 Order lexp(const std::vector<Node> &G) {
   const int n = G.size();
   Order order = Order(n);
-  std::stack<std::deque<int>> stack;
+  std::vector<std::unordered_set<int>> stack(n, (std::unordered_set<int>){});
+  std::vector<int> location(n);
 
+  int top_level = 0;
   // Initialize the stack with the first set containing all the nodes
-  std::deque<int> init_set;
-  for (Node node : G)
-    init_set.push_back(node.pos);
-  stack.push(init_set);
+  for (Node node : G) {
+    stack[top_level].insert(node.pos);
+    location[node.pos] = top_level;
+  }
 
   int cardinality = n - 1;
-  while (!stack.empty()) {
-    // get a vertex from the topmost set
-    int node = stack.top().front();
-    stack.top().pop_front();
-
-    // if it has no cardinality yet, assign it
-    if (order.alphainv[node] < 0) {
-      add_in_order(order, cardinality, node);
-      cardinality--;
-
-      // create a new set with the unvisited adjacents and push it
-      std::deque<int> new_set;
-      for (int adj : G[node].adj) {
-        if (order.alphainv[adj] < 0)
-          if (find(stack.top(), adj) >= 0)
-            new_set.push_front(adj);
-          else
-            new_set.push_back(adj);
+  while (top_level >= 0) {
+    // get a vertex from the topmost set and delete it from stack
+    int node = *stack[top_level].begin();
+    stack[top_level].erase(stack[top_level].begin());
+    // set its order
+    add_in_order(order, cardinality, node);
+    cardinality--;
+    // move the adjacents upwards of one level in the stack
+    for (int adj : G[node].adj)
+      if (order.alphainv[adj] < 0) {
+        stack[location[adj]].erase(adj);
+        location[adj]++;
+        stack[location[adj]].insert(adj);
+        top_level = std::max(location[adj], top_level);
       }
-      stack.push(new_set);
-    }
     // remove empty sets
-    while (!stack.empty() && stack.top().empty())
-      stack.pop();
+    while (top_level >= 0 && stack[top_level].size() == 0)
+      top_level--;
   }
   return order;
 }
