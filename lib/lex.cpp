@@ -20,14 +20,6 @@ void add_in_order(Order &ord, int card, int node_pos) {
   ord.alphainv[node_pos] = card;
 }
 
-int find(std::deque<int> &d, int value) {
-  for (int i = 0; i < d.size(); i++) {
-    if (d[i] == value)
-      return i;
-  }
-  return -1;
-}
-
 /**
  * returns the elimination order for the graph G
  */
