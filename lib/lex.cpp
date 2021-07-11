@@ -6,6 +6,7 @@
 #include <iostream>
 #include <list>
 #include <map>
+#include <math.h>
 #include <stack>
 #include <unordered_set>
 #include <vector>
@@ -189,12 +190,13 @@ std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G) {
     // Don't visit the same edge twice
     std::unordered_set<Edge, EgdeHash> visited_edges;
     // Save what is the best path (minimum label nodes path) encountered
-    std::vector<int> best_path(n, labels[highest_node] + 1);
+    std::vector<float> best_path(n, labels[highest_node] + 1);
     // Use level to access the search priority queue
-    int level = labels[highest_node] + 1;
+    float level = labels[highest_node] + 1;
 
     // The nodes will be visisted in order of labels. First insert adjacents
     for (int adj : G[highest_node].adj) {
+      visited_edges.insert({highest_node, adj});
       if (labels[adj] >= 0) {
         search_pq[(int)labels[adj]].push_back(adj);
         best_path[adj] = (int)labels[adj];
@@ -206,7 +208,6 @@ std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G) {
     // Pop elements from the pq starting from lower levels
     while (level < labels[highest_node] ||
            (level == labels[highest_node] && !search_pq[level].empty())) {
-      assert(!search_pq[level].empty());
       int current = search_pq[level].back();
       search_pq[level].pop_back();
       // Visit the adjacents not in alphainv and which are connected to current
@@ -220,10 +221,10 @@ std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G) {
           int best_path_to_reach = std::min(best_path[current], best_path[adj]);
           // If the label is higher than the max label on the path to reach
           // highnode (stored in best path), there is a chain highnode->...->adj
-          if (labels[adj] > best_path_to_reach && !updated[adj]) {
+          if (labels[adj] > std::floor(best_path_to_reach) && !updated[adj]) {
             labels[adj] += 0.5;
             update_gstar(elim, highest_node, adj);
-            best_path[adj] = (int)labels[adj];
+            best_path[adj] = labels[adj];
             updated[adj] = true;
           } else {
             best_path[adj] = best_path_to_reach;
