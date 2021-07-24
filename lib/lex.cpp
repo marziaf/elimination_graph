@@ -26,7 +26,9 @@ void add_in_order(Order &ord, int card, int node_pos) {
 Order lexp(const std::vector<Node> &G) {
   const int n = G.size();
   Order order = Order(n);
+  // Store the vertices to keep an order. Use a vector for efficiency
   std::vector<std::unordered_set<int>> stack(n, (std::unordered_set<int>){});
+  // Save a pointer to the layer where the node is located
   std::vector<int> location(n);
 
   int top_level = 0;
@@ -213,12 +215,12 @@ std::pair<Order, Elimination_graph> lexm(const std::vector<Node> &G) {
           int best_path_to_reach = std::min(best_path[current], best_path[adj]);
           // If the label is higher than the max label on the path to reach
           // highnode (stored in best path), there is a chain highnode->...->adj
-          if (labels[adj] > std::floor(best_path_to_reach) && !updated[adj]) {
+          if (labels[adj] > best_path_to_reach && !updated[adj]) {
             labels[adj] += 0.5;
             update_gstar(elim, highest_node, adj);
             best_path[adj] = labels[adj];
             updated[adj] = true;
-          } else {
+          } else if (labels[adj] <= best_path_to_reach) {
             best_path[adj] = best_path_to_reach;
           }
           search_pq[best_path[adj]].push_back(adj);
